@@ -1075,16 +1075,25 @@ window.OVERLAP_CONFIG = {
     cloud: [],                     // schedules pulled from your groups, read only here
     off: {},                       // id -> true when excluded
     view: 'overlap',
-    dayStart: 8 * 60, dayEnd: 21 * 60, minLen: 45, buffer: 10
+    dayStart: 8 * 60, dayEnd: 21 * 60, minLen: 45, buffer: 10,
+    updatedAt: 0                   // when this browser last edited, for device ordering
   };
 
-  function save() {
+  function writeLocal() {
     try {
       localStorage.setItem(KEY, JSON.stringify({
-        people: S.people, off: S.off,
+        people: S.people, off: S.off, updatedAt: S.updatedAt,
         dayStart: S.dayStart, dayEnd: S.dayEnd, minLen: S.minLen, buffer: S.buffer
       }));
     } catch (e) { /* quota or blocked storage, session still works */ }
+  }
+  /* Persist without restamping or re-uploading. Used when the change came
+     from the account in the first place, so it must not look like a new edit. */
+  function saveQuiet() { writeLocal(); }
+
+  function save() {
+    S.updatedAt = Date.now();
+    writeLocal();
     if (window.__CLOUD__ && window.__CLOUD__.onLocalChange) window.__CLOUD__.onLocalChange();
   }
   function load() {
@@ -1097,6 +1106,7 @@ window.OVERLAP_CONFIG = {
         if (d.dayEnd) S.dayEnd = d.dayEnd;
         if (d.minLen) S.minLen = d.minLen;
         if (typeof d.buffer === 'number') S.buffer = d.buffer;
+        S.updatedAt = d.updatedAt || 0;
       }
     } catch (e) { /* corrupt payload, start clean rather than crash */ }
   }
@@ -2471,7 +2481,7 @@ window.OVERLAP_CONFIG = {
     });
 
     renderAll();
-    window.__OVERLAP__ = { S: S, renderAll: renderAll, save: save, el: el, modal: modal, uid: uid,
+    window.__OVERLAP__ = { S: S, renderAll: renderAll, save: save, saveQuiet: saveQuiet, el: el, modal: modal, uid: uid,
       decodeToCanvas: decodeToCanvas, rotateCanvas: rotateCanvas, allPeople: allPeople, myPerson: myPerson, nextColor: nextColor, PALETTE: PALETTE, autoFitWindow: autoFitWindow, freeForDay: freeForDay, allWindows: allWindows, openAdd: openAdd, readImage: readImage, mergeRows: mergeRows, active: active, visibleDays: visibleDays };
   }
 
@@ -2512,6 +2522,14 @@ window.OVERLAP_CONFIG = {
 
   function el() { return O.el.apply(null, arguments); }
   function $(id) { return document.getElementById(id); }
+
+  var lastWarning = null;
+  function warn(what, e) {
+    lastWarning = what;
+    try { console.warn('[overlap] ' + what, e); } catch (err) { }
+    var sub = $('subline');
+    if (sub) sub.textContent = what + '. Your schedules are still saved in this browser.';
+  }
 
   /* ---------- boot ---------- */
   async function init() {
@@ -2558,6 +2576,7 @@ window.OVERLAP_CONFIG = {
     $('groupPanel').hidden = false;
     await loadProfile();
     await loadGroups();
+    await syncRoster();
     await syncMine();
     await pull();
   }
@@ -2582,14 +2601,57 @@ window.OVERLAP_CONFIG = {
     $('btnAccount').textContent = shortName();
   }
 
-  /* ---------- my own schedule ---------- */
+  /* ---------- your whole roster, private to your account ----------
+     Only myPerson() is shared with a group. Everyone you added from a
+     screenshot lives here instead: it follows your account across devices,
+     and the rosters policy keeps it readable by you alone. */
+  function slimPeople(list) {
+    return list.map(function (p) {
+      // thumbs are full screenshots; far too large to ship on every edit
+      return { id: p.id, name: p.name, color: p.color, me: !!p.me, meets: p.meets };
+    });
+  }
+
+  async function syncRoster() {
+    var r = await sb.from('rosters').select('people, updated_at').eq('user_id', me.id).maybeSingle();
+    if (r.error) { warn('could not read your saved schedules', r.error); return; }
+
+    var remoteAt = r.data && r.data.updated_at ? Date.parse(r.data.updated_at) : 0;
+    var remote = r.data && r.data.people ? r.data.people : null;
+    var localAt = O.S.updatedAt || 0;
+
+    if (remote && remote.length && remoteAt > localAt) {
+      O.S.people = remote;                 // another device edited this account later
+      O.S.updatedAt = remoteAt;
+      O.saveQuiet();
+      O.autoFitWindow();
+      O.renderAll();
+    } else if (O.S.people.length) {
+      await pushRoster();
+    }
+  }
+
+  async function pushRoster() {
+    if (!me) return;
+    var r = await sb.from('rosters').upsert({
+      user_id: me.id,
+      people: slimPeople(O.S.people),
+      updated_at: new Date(O.S.updatedAt || Date.now()).toISOString()
+    });
+    if (r.error) warn('could not save your schedules to your account', r.error);
+  }
+
+  /* ---------- my own schedule, the one a group sees ---------- */
   async function syncMine() {
     var mine = O.myPerson();
-    var r = await sb.from('schedules').select('meets').eq('user_id', me.id).maybeSingle();
+    var r = await sb.from('schedules').select('meets, updated_at').eq('user_id', me.id).maybeSingle();
     var remote = r.data ? r.data.meets : null;
+    var remoteAt = r.data && r.data.updated_at ? Date.parse(r.data.updated_at) : 0;
 
-    if (mine && mine.meets.length) {
-      await pushMine();                                   // this device has the newer edit
+    // only claim to be newer if this browser actually edited more recently,
+    // otherwise a stale device would overwrite the good copy
+    if (mine && mine.meets.length && (O.S.updatedAt || 0) >= remoteAt) {
+      await pushMine();
     } else if (remote && remote.length) {
       if (!mine) {
         O.S.people.unshift({
@@ -2609,9 +2671,10 @@ window.OVERLAP_CONFIG = {
     if (!me) return;
     var mine = O.myPerson();
     if (!mine) return;
-    await sb.from('schedules').upsert({
-      user_id: me.id, meets: mine.meets, updated_at: new Date().toISOString()
+    var up = await sb.from('schedules').upsert({
+      user_id: me.id, meets: mine.meets, updated_at: new Date(O.S.updatedAt || Date.now()).toISOString()
     });
+    if (up.error) warn('could not share your schedule', up.error);
     await sb.from('profiles').update({ display_name: mine.name, colour: mine.color }).eq('id', me.id);
     if (profile) { profile.display_name = mine.name; profile.colour = mine.color; }
     $('btnAccount').textContent = shortName();
@@ -2620,7 +2683,10 @@ window.OVERLAP_CONFIG = {
   function onLocalChange() {
     if (!me) return;
     clearTimeout(pushTimer);
-    pushTimer = setTimeout(function () { pushMine().catch(function () { }); }, 900);
+    pushTimer = setTimeout(function () {
+      pushRoster().catch(function () { });
+      pushMine().catch(function () { });
+    }, 900);
   }
 
   /* ---------- everyone else ---------- */
