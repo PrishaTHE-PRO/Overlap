@@ -167,12 +167,6 @@ button{cursor:pointer; border-radius:2px}
 
 /* ============ account ============ */
 .signin{display:flex; flex-direction:column; gap:14px; max-width:46ch}
-.signin input[type=email]{background:transparent; border:0; border-bottom:1px solid var(--line2);
-  border-radius:0; padding:7px 2px; font-size:15px; width:100%}
-.signin input[type=email]:focus{outline:none; border-bottom-color:var(--accent)}
-.orline{display:flex; align-items:center; gap:12px; color:var(--faint); font-size:10px;
-  letter-spacing:.14em; text-transform:uppercase; font-family:"IBM Plex Sans Condensed",sans-serif}
-.orline::before,.orline::after{content:""; flex:1; height:0; border-top:1px solid var(--line)}
 .okmsg{color:var(--good); font-size:13.5px; margin-top:4px}
 .who-am-i{display:flex; align-items:baseline; gap:10px; padding-bottom:14px; border-bottom:1px solid var(--rule); margin-bottom:16px}
 .who-am-i b{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:17px; font-weight:700}
@@ -198,7 +192,10 @@ button{cursor:pointer; border-radius:2px}
 .legend i{display:inline-block; width:16px; height:10px; vertical-align:-1px; margin-right:6px}
 
 /* ============ calendar ============ */
-.calwrap{overflow-x:auto}
+.calwrap{overflow-x:auto; scrollbar-width:thin; scrollbar-color:var(--line2) var(--sunk)}
+.calwrap::-webkit-scrollbar{height:9px}
+.calwrap::-webkit-scrollbar-track{background:var(--sunk)}
+.calwrap::-webkit-scrollbar-thumb{background:var(--line2)}
 .cal{min-width:620px; background:var(--surface); border:1px solid var(--line)}
 .calhead{display:grid; grid-template-columns:var(--gutter) repeat(var(--ndays),1fr); border-bottom:1px solid var(--line)}
 .calhead div{
@@ -222,10 +219,9 @@ button{cursor:pointer; border-radius:2px}
 .day .rules i{position:absolute; left:0; right:0; height:0; border-top:1px solid var(--rule)}
 .day .rules i.half{opacity:.45}
 
-.lanes{position:absolute; inset:0; display:flex; gap:2px; padding:0 3px}
-.lane{position:relative; flex:1 1 0; min-width:0}
+.lanes{position:absolute; inset:0; padding:0 3px}
 .busy{
-  position:absolute; left:0; right:0; border-radius:1px; overflow:hidden;
+  position:absolute; border-radius:1px; overflow:hidden;
   background:color-mix(in oklab, var(--pc) var(--fill), var(--surface));
   border-left:2px solid color-mix(in oklab, var(--pc) var(--pcw), var(--tint));
 }
@@ -238,8 +234,8 @@ button{cursor:pointer; border-radius:2px}
   font-family:"IBM Plex Mono",monospace; white-space:nowrap; overflow:hidden}
 .busy.together::after{content:""; position:absolute; top:3px; right:3px; width:4px; height:4px;
   background:var(--ink); opacity:.5; border-radius:1px}
-.day.mid .busy s{display:none}
-.day.narrow .busy b, .day.narrow .busy s{display:none}
+.busy.no-time s{display:none}
+.busy.no-code b{display:none}
 .cal.compact .busy s{display:none}
 
 /* an open window is drawn as a measured span, not a block */
@@ -1183,6 +1179,65 @@ window.OVERLAP_CONFIG = {
   }
 
   /* ---------- calendar component ---------- */
+
+  /* One day's blocks laid into as few columns as the real clashes need, rather
+     than one fixed column per person. Two people whose classes never collide
+     share a column, and a lone class gets the whole day width. */
+  function packDay(people, d) {
+    var items = [];
+    people.forEach(function (p) {
+      p.meets.forEach(function (m) {
+        if (m.day !== d) return;
+        var a = Math.max(m.start, S.dayStart), b = Math.min(m.end, S.dayEnd);
+        if (b <= a) return;
+        items.push({ p: p, m: m, s: a, e: b });
+      });
+    });
+    items.sort(function (x, y) { return x.s - y.s || y.e - x.e; });
+
+    var ends = [];                       // when each column last became free
+    items.forEach(function (it) {
+      for (var c = 0; c < ends.length; c++) {
+        if (ends[c] <= it.s) { it.col = c; ends[c] = it.e; return; }
+      }
+      it.col = ends.length; ends.push(it.e);
+    });
+    var cols = Math.max(ends.length, 1);
+
+    // widen each block over the columns to its right that are free for its span,
+    // so an afternoon on its own is not stuck at a third of the width
+    items.forEach(function (it) {
+      var span = 1;
+      for (var c = it.col + 1; c < cols; c++) {
+        var free = items.every(function (o) {
+          return o === it || o.col !== c || o.e <= it.s || o.s >= it.e;
+        });
+        if (!free) break;
+        span++;
+      }
+      it.span = span;
+    });
+    return { items: items, cols: cols };
+  }
+
+  /* Course code and time are shown whenever they actually fit the drawn block,
+     which depends on the window, not on how many schedules are loaded. */
+  function fitLabels(root) {
+    var bs = root.querySelectorAll('.busy');
+    for (var i = 0; i < bs.length; i++) {
+      var b = bs[i], w = b.offsetWidth, h = b.offsetHeight;
+      b.classList.toggle('no-code', w < 34 || h < 15);
+      b.classList.toggle('no-time', w < 58 || h < 27);
+    }
+  }
+  var fitQueued = false;
+  function queueFit() {
+    if (fitQueued) return;
+    fitQueued = true;
+    requestAnimationFrame(function () { fitQueued = false; fitLabels(document); });
+  }
+  window.addEventListener('resize', queueFit);
+
   function buildCalendar(opts) {
     var people = opts.people, days = opts.days;
     var total = S.dayEnd - S.dayStart;
@@ -1196,6 +1251,16 @@ window.OVERLAP_CONFIG = {
     var cal = el('div', 'cal' + (opts.compact ? ' compact' : ''));
     cal.style.setProperty('--ndays', days.length);
     cal.style.setProperty('--gutter', (opts.gutter || 46) + 'px');
+
+    var layouts = {}, maxCols = 1;
+    days.forEach(function (d) {
+      layouts[d] = packDay(people, d);
+      if (layouts[d].cols > maxCols) maxCols = layouts[d].cols;
+    });
+    // a clash-heavy week gets a wider grid and a scrollbar (.calwrap scrolls)
+    // instead of columns that shrink until nothing can be read
+    cal.style.minWidth =
+      Math.max(620, (opts.gutter || 46) + days.length * maxCols * 42) + 'px';
 
     var head = el('div', 'calhead');
     head.appendChild(el('div', '', ''));
@@ -1222,8 +1287,7 @@ window.OVERLAP_CONFIG = {
     body.appendChild(gut);
 
     days.forEach(function (d) {
-      var col = el('div', 'day' + (people.length > 2 ? ' narrow' : people.length > 1 ? ' mid' : '') +
-        (d === today ? ' is-today' : ''));
+      var col = el('div', 'day' + (d === today ? ' is-today' : ''));
 
       var rules = el('div', 'rules');
       for (var t = Math.ceil(S.dayStart / 30) * 30; t <= S.dayEnd; t += 30) {
@@ -1234,23 +1298,23 @@ window.OVERLAP_CONFIG = {
       col.appendChild(rules);
 
       var lanes = el('div', 'lanes');
-      people.forEach(function (p) {
-        var lane = el('div', 'lane');
-        p.meets.filter(function (m) { return m.day === d; }).forEach(function (m) {
-          var top = (Math.max(m.start, S.dayStart) - S.dayStart) * ppm;
-          var hgt = (Math.min(m.end, S.dayEnd) - Math.max(m.start, S.dayStart)) * ppm;
-          if (hgt <= 0) return;
-          var withN = shared[m.code + '|' + m.day + '|' + m.start];
-          var b = el('div', 'busy' + (withN ? ' together' : ''));
-          b.style.cssText = '--pc:' + p.color + ';top:' + top + 'px;height:' + Math.max(hgt, 6) + 'px';
-          b.title = p.name + ' · ' + m.code + (m.sect ? ' ' + m.sect : '') + ' · ' +
-            hhmm(m.start) + '–' + hhmm(m.end) +
-            (withN ? '  (here with ' + (withN - 1) + ' other' + (withN > 2 ? 's' : '') + ')' : '');
-          b.appendChild(el('b', '', m.code));
-          b.appendChild(el('s', '', hhmm(m.start) + '–' + hhmm(m.end)));
-          lane.appendChild(b);
-        });
-        lanes.appendChild(lane);
+      var lay = layouts[d];
+      lay.items.forEach(function (it) {
+        var p = it.p, m = it.m;
+        var top = (it.s - S.dayStart) * ppm;
+        var hgt = (it.e - it.s) * ppm;
+        var withN = shared[m.code + '|' + m.day + '|' + m.start];
+        var b = el('div', 'busy' + (withN ? ' together' : ''));
+        b.style.cssText = '--pc:' + p.color +
+          ';top:' + top + 'px;height:' + Math.max(hgt, 6) + 'px' +
+          ';left:' + (it.col * 100 / lay.cols) + '%' +
+          ';width:calc(' + (it.span * 100 / lay.cols) + '% - 2px)';
+        b.title = p.name + ' · ' + m.code + (m.sect ? ' ' + m.sect : '') + ' · ' +
+          hhmm(m.start) + '–' + hhmm(m.end) +
+          (withN ? '  (here with ' + (withN - 1) + ' other' + (withN > 2 ? 's' : '') + ')' : '');
+        b.appendChild(el('b', '', m.code));
+        b.appendChild(el('s', '', hhmm(m.start) + '–' + hhmm(m.end)));
+        lanes.appendChild(b);
       });
       col.appendChild(lanes);
 
@@ -1283,6 +1347,7 @@ window.OVERLAP_CONFIG = {
 
     cal.appendChild(body);
     wrap.appendChild(cal);
+    queueFit();
     return wrap;
   }
 
@@ -2655,62 +2720,33 @@ window.OVERLAP_CONFIG = {
     wrap.appendChild(el('p', 'lede',
       'Signing in keeps your schedule on your account instead of just this browser, and lets friends add themselves to your group rather than sending you screenshots. Everything you have added so far comes with you.'));
 
-    var f = el('div', 'field'); f.style.margin = '0';
-    f.appendChild(el('label', '', CFG.campusDomain ? 'Your ' + CFG.campusDomain + ' email' : 'Email'));
-    var email = el('input'); email.type = 'email'; email.autocomplete = 'email';
-    email.placeholder = CFG.campusDomain ? 'you@' + CFG.campusDomain : 'you@example.com';
-    f.appendChild(email);
-    wrap.appendChild(f);
-
-    var send = el('button', 'btn solid', 'Email me a link');
-    send.style.alignSelf = 'flex-start';
-    wrap.appendChild(send);
-
-    var msg = el('div', 'okmsg'); msg.hidden = true;
     var err = el('div', 'err'); err.hidden = true;
-    wrap.appendChild(msg); wrap.appendChild(err);
+    wrap.appendChild(err);
 
     if (CFG.google) {
-      wrap.appendChild(el('div', 'orline', 'or'));
-      var g = el('button', 'btn', 'Continue with Google');
+      var g = el('button', 'btn solid', 'Continue with Google');
       g.style.alignSelf = 'flex-start';
       g.onclick = async function () {
         err.hidden = true;
+        g.disabled = true;
         var r = await sb.auth.signInWithOAuth({
           provider: 'google',
           options: { redirectTo: location.origin + location.pathname }
         });
+        g.disabled = false;
         if (r.error) { err.textContent = r.error.message; err.hidden = false; }
       };
       wrap.appendChild(g);
+    } else {
+      err.textContent = 'Sign in is not switched on yet. Your schedule stays in this browser for now.';
+      err.hidden = false;
     }
 
-    send.onclick = async function () {
-      var v = (email.value || '').trim().toLowerCase();
-      err.hidden = true; msg.hidden = true;
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) {
-        err.textContent = 'That does not look like an email address.'; err.hidden = false; return;
-      }
-      if (CFG.campusDomain && v.slice(-(CFG.campusDomain.length + 1)) !== '@' + CFG.campusDomain) {
-        err.textContent = 'Use your @' + CFG.campusDomain + ' address.'; err.hidden = false; return;
-      }
-      send.disabled = true; send.textContent = 'Sending';
-      var r = await sb.auth.signInWithOtp({
-        email: v, options: { emailRedirectTo: location.origin + location.pathname }
-      });
-      send.disabled = false; send.textContent = 'Email me a link';
-      if (r.error) { err.textContent = r.error.message; err.hidden = false; return; }
-      msg.textContent = 'Link sent. Check ' + v + ' and open it on this device.';
-      msg.hidden = false;
-    };
-
-    email.onkeydown = function (e) { if (e.key === 'Enter') send.click(); };
     m.body.appendChild(wrap);
     m.foot.appendChild(el('span', 'spacer'));
     var done = el('button', 'btn quiet', 'Not now');
     done.onclick = function () { m.close(); };
     m.foot.appendChild(done);
-    setTimeout(function () { email.focus(); }, 30);
   }
 
   function accountSignedIn() {
