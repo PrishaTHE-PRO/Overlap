@@ -386,6 +386,12 @@ button{cursor:pointer; border-radius:2px}
 .drop h4{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:16px; font-weight:700; letter-spacing:.02em; margin-bottom:5px}
 .drop p{margin:0; font-size:13px; color:var(--dim)}
 .drop .or{margin-top:12px; font-size:12px; color:var(--faint); max-width:52ch; margin-left:auto; margin-right:auto}
+.drop .tip{
+  margin-top:14px; display:inline-block; max-width:52ch; padding:6px 11px;
+  font-size:12px; font-weight:500; color:var(--accent-ink);
+  background:color-mix(in oklab, var(--accent) 7%, var(--surface));
+  border:1px solid color-mix(in oklab, var(--accent) 22%, transparent); border-radius:2px;
+}
 
 .prog{margin-top:16px; font-size:12.5px; color:var(--dim); font-family:"IBM Plex Mono",monospace}
 .bar-line{height:2px; background:var(--sunk); overflow:hidden; margin-top:8px}
@@ -2121,6 +2127,7 @@ window.OVERLAP_CONFIG = {
 
     var drop = el('div', 'drop');
     drop.innerHTML = '<h4>Drop a screenshot of the week</h4><p>Click to choose a file, or paste one with \u2318V.</p>' +
+      '<p class="tip">Use a screenshot rather than a photo of your screen. It reads much faster and gets more of your classes right.</p>' +
       '<p class="or">Works on a week grid from Course Search &amp; Enroll, MyUW, Google Calendar, or anything else with coloured class blocks.</p>';
     var fileIn = el('input'); fileIn.type = 'file'; fileIn.accept = 'image/*,.heic,.heif'; fileIn.multiple = true; fileIn.style.display = 'none';
     drop.onclick = function () { fileIn.click(); };
