@@ -451,6 +451,122 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
 .hero .steps b{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); margin-bottom:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
 
+/* ============ phone week ============
+   Only drawn under 640px. One neutral band per day says someone is in class;
+   the tinted bands are the windows everyone shares, which is the thing the
+   phone is actually for. */
+.mw{display:flex; flex-direction:column; gap:0}
+.mw-head{display:flex; align-items:flex-end; gap:12px; padding:2px 2px 14px}
+.mw-head .rng{font-size:12.5px; font-weight:500; color:var(--faint); letter-spacing:.02em}
+.mw-head h2{font-size:26px; font-weight:600; letter-spacing:-.02em; line-height:1.15; margin-top:2px}
+.mw-faces{display:flex; align-items:center; flex:none}
+.mw-faces span{
+  width:28px; height:28px; border-radius:99px; color:var(--surface); font-size:11px; font-weight:600;
+  display:grid; place-items:center; border:2px solid var(--surface); margin-left:-8px;
+}
+.mw-chips{display:flex; gap:7px; overflow-x:auto; padding:0 2px 14px; scrollbar-width:none}
+.mw-chips::-webkit-scrollbar{display:none}
+.mw-chips button{
+  flex:none; display:flex; align-items:center; gap:7px; border:1px solid var(--line2);
+  background:var(--raise); color:var(--ink); border-radius:999px; padding:7px 13px;
+  font-size:13px; font-weight:500; min-height:34px; white-space:nowrap;
+}
+.mw-chips button.off{color:var(--faint); border-color:var(--line); background:transparent}
+.mw-chips button.all{background:var(--ink); color:var(--surface); border-color:var(--ink)}
+.mw-chips i{width:7px; height:7px; border-radius:99px; background:var(--pc); flex:none}
+.mw-best{
+  display:block; width:100%; text-align:left; border:1px solid color-mix(in oklab, var(--accent) 26%, transparent);
+  background:color-mix(in oklab, var(--accent) 7%, var(--surface)); border-radius:18px; padding:16px 17px;
+}
+.mw-best .lab{font-size:12.5px; font-weight:500; color:var(--accent-ink); letter-spacing:.02em}
+.mw-best .big{font-family:"IBM Plex Mono",monospace; font-size:24px; font-weight:500; letter-spacing:-.02em; margin-top:5px; display:block}
+.mw-best .meta{font-size:14px; color:var(--dim); display:block; margin-top:2px}
+.mw-sec{display:flex; align-items:baseline; gap:10px; margin:24px 2px 11px}
+.mw-sec b{font-size:15px; font-weight:600}
+.mw-sec span{font-size:12.5px; color:var(--faint); margin-left:auto}
+.mw-grid{border:1px solid var(--line); border-radius:18px; overflow:hidden; background:var(--surface)}
+.mw-gh{display:grid; border-bottom:1px solid var(--line)}
+.mw-gh div{padding:9px 0 8px; text-align:center; border-left:1px solid var(--rule)}
+.mw-gh div:first-child{border-left:0}
+.mw-gh .dow{font-size:10.5px; font-weight:500; color:var(--faint); letter-spacing:.06em}
+.mw-gh .num{font-size:14px; font-weight:500; color:var(--dim); margin-top:1px}
+.mw-gh .today .dow, .mw-gh .today .num{color:var(--accent); font-weight:600}
+.mw-gb{display:grid}
+.mw-gut{position:relative}
+.mw-gut span{
+  position:absolute; right:6px; font-family:"IBM Plex Mono",monospace; font-size:9.5px;
+  color:var(--faint); transform:translateY(-4px);
+}
+.mw-col{position:relative; border-left:1px solid var(--rule)}
+.mw-col i.rule{position:absolute; left:0; right:0; height:0; border-top:1px solid var(--rule); opacity:.6}
+.mw-busy{position:absolute; left:3px; right:3px; border-radius:5px;
+  background:color-mix(in oklab, var(--ink) 9%, var(--surface))}
+.mw-free{
+  position:absolute; left:2px; right:2px; border-radius:7px; padding:4px 2px 0; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center;
+  background:color-mix(in oklab, var(--accent) 8%, var(--surface));
+  border:1px solid color-mix(in oklab, var(--accent) 26%, transparent);
+}
+.mw-free b{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:500; color:var(--accent-ink); line-height:1.1}
+.mw-free s{text-decoration:none; font-size:8.5px; color:color-mix(in oklab, var(--accent-ink) 70%, transparent); line-height:1.2; margin-top:1px}
+.mw-legend{display:flex; gap:16px; align-items:center; margin:11px 4px 0; font-size:11.5px; color:var(--faint)}
+.mw-legend span{display:flex; align-items:center; gap:6px}
+.mw-legend i{width:14px; height:9px; border-radius:3px; display:inline-block}
+.mw-list{border:1px solid var(--line); border-radius:18px; overflow:hidden}
+.mw-list button{
+  width:100%; text-align:left; background:var(--surface); border:0; border-top:1px solid var(--rule);
+  padding:13px 15px; display:flex; align-items:center; gap:12px; min-height:56px;
+}
+.mw-list button:first-child{border-top:0}
+.mw-list .d{width:34px; flex:none; font-size:12px; font-weight:500; color:var(--faint)}
+.mw-list .t{flex:1; min-width:0}
+.mw-list .t b{display:block; font-family:"IBM Plex Mono",monospace; font-size:14px; font-weight:400; color:var(--ink)}
+.mw-list .t s{display:block; text-decoration:none; font-size:12.5px; color:var(--faint); margin-top:2px}
+.mw-list .tag{font-size:12px; font-weight:500; border-radius:99px; padding:5px 10px; flex:none;
+  color:var(--accent-ink); background:color-mix(in oklab, var(--accent) 9%, var(--surface))}
+
+/* the phone tab bar, and the sheet a window opens into */
+.tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:60; display:flex; padding:6px 8px 10px;
+  background:color-mix(in oklab, var(--surface) 88%, transparent); backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);
+}
+.tabbar button{
+  flex:1; border:0; background:transparent; min-height:50px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:5px; color:var(--faint); font-size:10.5px; font-weight:500;
+}
+.tabbar button.on{color:var(--accent)}
+.tabbar .ic{width:20px; height:18px; display:grid; place-items:center}
+.sheet-wrap{position:fixed; inset:0; z-index:70; display:flex; align-items:flex-end}
+.sheet-scrim{position:absolute; inset:0; background:rgba(10,12,14,.42)}
+.sheet{
+  position:relative; width:100%; background:var(--surface); border-radius:22px 22px 0 0;
+  padding:10px 20px 24px; box-shadow:0 -18px 40px -18px rgba(0,0,0,.4); max-height:80vh; overflow:auto;
+}
+.sheet .grab{width:38px; height:4px; border-radius:99px; background:var(--line2); margin:0 auto 14px}
+.sheet .day{font-size:12.5px; font-weight:500; color:var(--faint)}
+.sheet .rng{font-family:"IBM Plex Mono",monospace; font-size:23px; font-weight:500; letter-spacing:-.02em; margin-top:4px}
+.sheet .meta{font-size:14px; color:var(--dim); margin-top:5px}
+.sheet .who{display:flex; flex-direction:row; flex-wrap:wrap; gap:7px; margin-top:16px}
+.sheet .who span{
+  display:flex; align-items:center; gap:7px; border:1px solid var(--line); background:var(--raise);
+  border-radius:999px; padding:7px 12px 7px 9px; font-size:13.5px;
+}
+.sheet .who i{width:7px; height:7px; border-radius:99px; background:var(--pc)}
+
+/* one screen at a time, chosen by the tab bar */
+@media (max-width:640px){
+  body.has-tabs .stage{padding-bottom:96px}
+  body.has-tabs .rail-r .panel:first-child{border-top:0}
+  body.mt-week .rail-l, body.mt-week .rail-r{display:none}
+  body.mt-groups .stage, body.mt-groups .rail-r, body.mt-groups #peoplePanel{display:none}
+  body.mt-groups .rail-l{border-top:0; padding-bottom:96px}
+  body.mt-together .stage, body.mt-together .rail-l{display:none}
+  body.mt-together .rail-r{border-top:0; padding-bottom:96px}
+  body.mt-groups #groupPanel[hidden]{display:block}
+  body.mt-groups #groupPanel[hidden] .panel-b{display:none}
+}
+
 /* ============ phone ============
    Last in the sheet on purpose: these override component rules above, and an
    earlier media block would lose to them on equal specificity. */
@@ -487,10 +603,11 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
 </div>
 
 <div class="alertbar" id="alertbar" hidden></div>
+<div class="tabbar" id="tabbar" hidden></div>
 
 <div class="frame">
   <aside class="rail rail-l">
-    <section class="panel">
+    <section class="panel" id="peoplePanel">
       <div class="panel-h"><h2>Who's in</h2><button class="btn quiet sm" id="btnAll" style="margin-left:auto">All</button></div>
       <div class="panel-b panel-flush"><div id="people"></div></div>
     </section>
@@ -500,7 +617,7 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
         <button class="btn quiet sm" id="btnNewGroup">New</button></div>
       <div class="panel-b panel-flush"><div id="groups"></div></div>
     </section>
-    <section class="panel">
+    <section class="panel" id="windowPanel">
       <div class="panel-h"><h2>Window</h2></div>
       <div class="panel-b">
         <div class="ctrl"><span>Day starts</span><select id="selStart"></select></div>
@@ -1133,7 +1250,8 @@ window.OVERLAP_CONFIG = {
     view: 'overlap',
     dayStart: 8 * 60, dayEnd: 21 * 60, minLen: 45, buffer: 10,
     updatedAt: 0,                  // when this browser last edited, for device ordering
-    groupView: 'all'               // 'all', 'local', or a group id
+    groupView: 'all',              // 'all', 'local', or a group id
+    mtab: 'week'                   // phone tab: week, groups, together
   };
 
   function writeLocal() {
@@ -1389,6 +1507,13 @@ window.OVERLAP_CONFIG = {
       fitLabels(document);
     });
   }
+  var wasPhone = null;
+  window.addEventListener('resize', function () {
+    queueFit();
+    var now = isPhone();
+    if (wasPhone !== null && wasPhone !== now) renderAll();   // the two weeks are different builds
+    wasPhone = now;
+  });
   window.addEventListener('resize', queueFit);
 
   function buildCalendar(opts) {
@@ -1620,11 +1745,299 @@ window.OVERLAP_CONFIG = {
     });
   }
 
+  /* ================= phone week =================
+     The desktop grid gives every person a column. On a phone that is what
+     turns a shared 11am into four unreadable slivers, so here the classes
+     collapse into one neutral "someone is in class" band per day and the
+     windows everyone shares are the only tinted, labelled things. */
+  var MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function isPhone() {
+    return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches);
+  }
+
+  function weekDates(days) {
+    var now = new Date(), out = {};
+    var mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+    days.forEach(function (d) {
+      out[d] = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + ((d + 6) % 7));
+    });
+    return out;
+  }
+
+  function busyBands(ppl, d) {
+    var raw = [];
+    ppl.forEach(function (p) {
+      p.meets.forEach(function (m) {
+        if (m.day !== d) return;
+        var a = Math.max(m.start, S.dayStart), b = Math.min(m.end, S.dayEnd);
+        if (b > a) raw.push([a, b]);
+      });
+    });
+    return mergeIntervals(raw);
+  }
+
+  function shortDur(m) {
+    var h = Math.floor(m / 60), mi = Math.round(m % 60);
+    return (h ? h + 'h' : '') + (h && mi ? ' ' : '') + (mi ? mi + 'm' : '');
+  }
+
+  function openWindowSheet(d, w, ppl, dates) {
+    var wrap = el('div', 'sheet-wrap');
+    var scrim = el('div', 'sheet-scrim');
+    var sheet = el('div', 'sheet');
+    function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+    scrim.onclick = close;
+
+    sheet.appendChild(el('div', 'grab'));
+    var dt = dates[d];
+    sheet.appendChild(el('div', 'day', DAY_FULL[d] + (dt ? ', ' + MONTH_SHORT[dt.getMonth()] + ' ' + dt.getDate() : '')));
+    sheet.appendChild(el('div', 'rng', hhmm(w[0]) + ' \u2013 ' + hhmm(w[1])));
+    sheet.appendChild(el('div', 'meta', dur(w[1] - w[0]) + ' \u00B7 ' +
+      (ppl.length === 1 ? 'you are free' : 'nobody has class')));
+    var who = el('div', 'who');
+    ppl.forEach(function (p) {
+      var t = el('span');
+      t.style.setProperty('--pc', p.color);
+      t.appendChild(el('i'));
+      t.appendChild(document.createTextNode(p.name));
+      who.appendChild(t);
+    });
+    sheet.appendChild(who);
+
+    wrap.appendChild(scrim);
+    wrap.appendChild(sheet);
+    document.body.appendChild(wrap);
+  }
+
+  function buildMobileWeek(ppl, days) {
+    var host = el('div', 'mw');
+    var dates = weekDates(days);
+    var today = new Date().getDay();
+
+    var head = el('div', 'mw-head');
+    var left = el('div');
+    left.style.cssText = 'flex:1;min-width:0';
+    var first = dates[days[0]], last = dates[days[days.length - 1]];
+    left.appendChild(el('div', 'rng', first && last
+      ? MONTH_SHORT[first.getMonth()] + ' ' + first.getDate() + ' \u2013 ' +
+        (first.getMonth() === last.getMonth() ? '' : MONTH_SHORT[last.getMonth()] + ' ') + last.getDate()
+      : ''));
+    left.appendChild(el('h2', '', 'This week'));
+    head.appendChild(left);
+    var faces = el('div', 'mw-faces');
+    ppl.slice(0, 5).forEach(function (p) {
+      var f = el('span', '', (p.name || '?').trim().charAt(0).toUpperCase());
+      f.style.background = p.color;
+      faces.appendChild(f);
+    });
+    head.appendChild(faces);
+    host.appendChild(head);
+
+    // who is counted, as a row you can thumb through rather than a rail
+    var chips = el('div', 'mw-chips');
+    var everyone = el('button', 'all');
+    everyone.appendChild(document.createTextNode('Everyone'));
+    everyone.onclick = function () { S.off = {}; save(); renderAll(); };
+    chips.appendChild(everyone);
+    allPeople().forEach(function (p) {
+      var on = !S.off[p.id];
+      var b = el('button', on ? '' : 'off');
+      b.style.setProperty('--pc', p.color);
+      b.appendChild(el('i'));
+      b.appendChild(document.createTextNode(p.name));
+      b.onclick = function () {
+        if (S.off[p.id]) delete S.off[p.id]; else S.off[p.id] = true;
+        save(); renderAll();
+      };
+      chips.appendChild(b);
+    });
+    host.appendChild(chips);
+
+    var wins = allWindows(ppl, days);
+
+    // the one window worth opening the app for: today's longest, else the next
+    var dayOrder = {};
+    days.forEach(function (d, i) { dayOrder[d] = i; });
+    function seqOf(w) { return dayOrder[w.day]; }
+
+    if (wins.length) {
+      var score = function (w) {
+        return (w.day === today ? 1000 : 0) + (w.lunch ? 300 : 0) + Math.min(w.len, 180);
+      };
+      var best = wins.slice().sort(function (a, b) {
+        return score(b) - score(a) || seqOf(a) - seqOf(b) || a.start - b.start;
+      })[0];
+      var card = el('button', 'mw-best');
+      card.appendChild(el('span', 'lab', best.day === today ? 'Best window today' : 'Best window this week'));
+      card.appendChild(el('span', 'big', hhmm(best.start) + ' \u2013 ' + hhmm(best.end)));
+      card.appendChild(el('span', 'meta', (best.day === today ? '' : DAY_FULL[best.day] + ' \u00B7 ') +
+        dur(best.len) + ' \u00B7 ' + (ppl.length === 1 ? 'you are free' : 'all ' + ppl.length + ' free')));
+      card.onclick = function () { openWindowSheet(best.day, [best.start, best.end], ppl, dates); };
+      host.appendChild(card);
+    }
+
+    var sec = el('div', 'mw-sec');
+    sec.appendChild(el('b', '', 'Shared time'));
+    sec.appendChild(el('span', '', wins.length + (wins.length === 1 ? ' window' : ' windows')));
+    host.appendChild(sec);
+
+    var ppm = 0.68, H = Math.round((S.dayEnd - S.dayStart) * ppm);
+    var cols = '34px repeat(' + days.length + ',1fr)';
+
+    var grid = el('div', 'mw-grid');
+    var gh = el('div', 'mw-gh');
+    gh.style.gridTemplateColumns = cols;
+    gh.appendChild(el('div'));
+    days.forEach(function (d) {
+      var c = el('div', d === today ? 'today' : '');
+      c.appendChild(el('div', 'dow', DAY_SHORT[d].toUpperCase()));
+      c.appendChild(el('div', 'num', dates[d] ? String(dates[d].getDate()) : ''));
+      gh.appendChild(c);
+    });
+    grid.appendChild(gh);
+
+    var gb = el('div', 'mw-gb');
+    gb.style.gridTemplateColumns = cols;
+    var gut = el('div', 'mw-gut');
+    gut.style.height = H + 'px';
+    for (var t = Math.ceil(S.dayStart / 60) * 60; t <= S.dayEnd; t += 60) {
+      var h12 = Math.floor(t / 60) % 12; if (h12 === 0) h12 = 12;
+      var lab = el('span', '', h12 + (t < 720 ? 'a' : 'p'));
+      lab.style.top = ((t - S.dayStart) * ppm) + 'px';
+      gut.appendChild(lab);
+    }
+    gb.appendChild(gut);
+
+    days.forEach(function (d) {
+      var col = el('div', 'mw-col');
+      col.style.height = H + 'px';
+      for (var t = Math.ceil(S.dayStart / 60) * 60; t <= S.dayEnd; t += 60) {
+        var r = el('i', 'rule');
+        r.style.top = ((t - S.dayStart) * ppm) + 'px';
+        col.appendChild(r);
+      }
+      busyBands(ppl, d).forEach(function (b) {
+        var n = el('div', 'mw-busy');
+        n.style.top = ((b[0] - S.dayStart) * ppm) + 'px';
+        n.style.height = Math.max((b[1] - b[0]) * ppm, 3) + 'px';
+        col.appendChild(n);
+      });
+      freeForDay(ppl, d).forEach(function (w) {
+        var f = el('div', 'mw-free');
+        var hgt = (w[1] - w[0]) * ppm;
+        f.style.top = ((w[0] - S.dayStart) * ppm) + 'px';
+        f.style.height = hgt + 'px';
+        f.appendChild(el('b', '', shortDur(w[1] - w[0])));
+        if (hgt >= 30) f.appendChild(el('s', '', ppl.length === 1 ? 'you' : 'all ' + ppl.length));
+        f.onclick = function () { openWindowSheet(d, w, ppl, dates); };
+        col.appendChild(f);
+      });
+      gb.appendChild(col);
+    });
+    grid.appendChild(gb);
+    host.appendChild(grid);
+
+    var leg = el('div', 'mw-legend');
+    var l1 = el('span'), i1 = el('i');
+    i1.style.cssText = 'background:color-mix(in oklab, var(--accent) 8%, var(--surface));' +
+      'border:1px solid color-mix(in oklab, var(--accent) 26%, transparent)';
+    l1.appendChild(i1); l1.appendChild(document.createTextNode('everyone free'));
+    var l2 = el('span'), i2 = el('i');
+    i2.style.background = 'color-mix(in oklab, var(--ink) 9%, var(--surface))';
+    l2.appendChild(i2); l2.appendChild(document.createTextNode('someone in class'));
+    leg.appendChild(l1); leg.appendChild(l2);
+    host.appendChild(leg);
+
+    if (wins.length) {
+      var s2 = el('div', 'mw-sec');
+      s2.appendChild(el('b', '', 'Next up'));
+      host.appendChild(s2);
+      var list = el('div', 'mw-list');
+      wins.slice().sort(function (a, b) { return seqOf(a) - seqOf(b) || a.start - b.start; })
+        .slice(0, 8).forEach(function (w) {
+          var row = el('button');
+          row.appendChild(el('span', 'd', DAY_SHORT[w.day]));
+          var mid = el('span', 't');
+          mid.appendChild(el('b', '', hhmm(w.start) + ' \u2013 ' + hhmm(w.end)));
+          mid.appendChild(el('s', '', dur(w.len) + ' \u00B7 ' +
+            (ppl.length === 1 ? 'you are free' : 'all ' + ppl.length + ' free')));
+          row.appendChild(mid);
+          row.appendChild(el('span', 'tag', w.len >= 150 ? 'Long' : w.lunch ? 'Lunch' : 'Gap'));
+          row.onclick = function () { openWindowSheet(w.day, [w.start, w.end], ppl, dates); };
+          list.appendChild(row);
+        });
+      host.appendChild(list);
+    }
+    return host;
+  }
+
+  /* ---------- phone tab bar ---------- */
+  var TABS = [
+    { id: 'week', label: 'Week' }, { id: 'add', label: 'Add' },
+    { id: 'groups', label: 'Groups' }, { id: 'together', label: 'Together' }
+  ];
+
+  function tabIcon(id) {
+    var w = el('span', 'ic'), i;
+    if (id === 'week') {
+      w.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:3px;width:17px;height:17px';
+      for (i = 0; i < 4; i++) {
+        var q = el('i');
+        q.style.cssText = 'background:currentColor;border-radius:1.5px;opacity:' + (i === 0 || i === 3 ? 1 : .5);
+        w.appendChild(q);
+      }
+    } else if (id === 'add') {
+      w.innerHTML = '<span style="position:relative;width:17px;height:17px;display:block">' +
+        '<i style="position:absolute;left:0;right:0;top:7.5px;height:2px;background:currentColor;border-radius:2px"></i>' +
+        '<i style="position:absolute;top:0;bottom:0;left:7.5px;width:2px;background:currentColor;border-radius:2px"></i></span>';
+    } else if (id === 'groups') {
+      w.innerHTML = '<span style="display:flex;gap:3px">' +
+        '<i style="width:5px;height:5px;border-radius:99px;background:currentColor"></i>' +
+        '<i style="width:5px;height:5px;border-radius:99px;background:currentColor;opacity:.55"></i>' +
+        '<i style="width:5px;height:5px;border-radius:99px;background:currentColor"></i></span>';
+    } else {
+      w.innerHTML = '<span style="position:relative;width:20px;height:12px;display:block">' +
+        '<i style="position:absolute;left:0;top:0;width:12px;height:12px;border-radius:99px;border:2px solid currentColor"></i>' +
+        '<i style="position:absolute;right:0;top:0;width:12px;height:12px;border-radius:99px;border:2px solid currentColor;opacity:.55"></i></span>';
+    }
+    return w;
+  }
+
+  function renderTabs() {
+    var bar = document.getElementById('tabbar');
+    if (!bar) return;
+    bar.hidden = !isPhone() || !allPeople().length;
+    document.body.classList.toggle('has-tabs', !bar.hidden);
+    TABS.forEach(function (t) {
+      document.body.classList.toggle('mt-' + t.id, !bar.hidden && S.mtab === t.id);
+    });
+    if (bar.hidden) return;
+    bar.innerHTML = '';
+    TABS.forEach(function (t) {
+      var b = el('button', S.mtab === t.id ? 'on' : '');
+      b.appendChild(tabIcon(t.id));
+      b.appendChild(el('span', '', t.label));
+      b.onclick = function () {
+        if (t.id === 'add') { openAdd(); return; }   // a step, not a place
+        S.mtab = t.id;
+        renderTabs();
+        window.scrollTo(0, 0);
+      };
+      bar.appendChild(b);
+    });
+  }
+
   function renderMain() {
     var host = document.getElementById('main');
     host.innerHTML = '';
     var days = visibleDays();
     var ppl = active();
+
+    if (isPhone() && S.view === 'overlap' && allPeople().length) {
+      host.appendChild(buildMobileWeek(ppl, days));
+      return;
+    }
 
     if (!allPeople().length) {
       var hero = el('div', 'hero');
@@ -1848,7 +2261,7 @@ window.OVERLAP_CONFIG = {
   }
 
   function renderAll() {
-    renderPeople(); renderMain(); renderFindings(); updateSubline();
+    renderPeople(); renderMain(); renderFindings(); updateSubline(); renderTabs();
     document.querySelector('.viewbar').style.display = allPeople().length ? '' : 'none';
   }
 
