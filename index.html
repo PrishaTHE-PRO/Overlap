@@ -1171,9 +1171,10 @@ window.OVERLAP_CONFIG = {
   function inScope(p) {
     var g = S.groupView || 'all';
     if (g === 'all') return true;
-    if (!p.cloud) return true;
-    if (g === 'local') return false;
-    return (p.groups || []).indexOf(g) >= 0;
+    if (p.me) return true;                            // your own week is the baseline of every view
+    if (g === 'local') return !p.cloud;               // only the people you added
+    if (p.cloud) return (p.groups || []).indexOf(g) >= 0;
+    return p.shareTo === g;                           // someone you added and shared into this group
   }
   function visible() { return allPeople().filter(inScope); }
   function active() { return visible().filter(function (p) { return !S.off[p.id]; }); }
@@ -2565,7 +2566,7 @@ window.OVERLAP_CONFIG = {
     'https://esm.sh/@supabase/supabase-js@2',
     'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
   ];
-  var CACHE = 'overlap.v1.cloud';
+  var CACHE = 'overlap.v1.cloud2';
 
   if (CFG.libUrl) CDN.unshift(CFG.libUrl);
 
@@ -2805,6 +2806,13 @@ window.OVERLAP_CONFIG = {
           meets: g.meets || [], thumbs: [], groups: [row.group_id]
         });
       });
+      var unplaced = O.S.cloud.filter(function (c) {
+        return !c.guest && !(c.groups && c.groups.length);
+      }).length;
+      if (unplaced) {
+        warn('cannot see who is in your groups, so filtering by one will look empty; ' +
+             'run supabase/group-members-read.sql', gm.error || null);
+      }
       try { localStorage.setItem(CACHE, JSON.stringify(O.S.cloud)); } catch (e) { }
       O.autoFitWindow();
       O.renderAll();
