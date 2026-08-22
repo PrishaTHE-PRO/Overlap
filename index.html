@@ -225,6 +225,13 @@ button{cursor:pointer; border-radius:2px}
 .legend i{display:inline-block; width:16px; height:10px; vertical-align:-1px; margin-right:6px}
 
 /* ============ calendar ============ */
+.calbox{min-width:0}
+.calhint{display:none}
+.calbox.more .calhint{
+  display:block; margin:0 0 7px; text-align:right; font-size:11px; color:var(--faint);
+  font-family:"IBM Plex Sans Condensed",sans-serif; letter-spacing:.06em; text-transform:uppercase;
+}
+.calbox.more .calhint::after{content:" \2192"}
 .calwrap{overflow-x:auto; scrollbar-width:thin; scrollbar-color:var(--line2) var(--sunk)}
 .calwrap::-webkit-scrollbar{height:9px}
 .calwrap::-webkit-scrollbar-track{background:var(--sunk)}
@@ -270,11 +277,11 @@ button{cursor:pointer; border-radius:2px}
 .busy.no-time s{display:none}
 .busy.no-code b{display:none}
 .busy s .sm{display:none}
+.busy.tshort s .lg{display:none}
+.busy.tshort s .sm{display:inline}
 .busy.inline{display:flex; align-items:baseline; gap:5px}
-.busy.inline b{padding:2px 0 0 5px}
-.busy.inline s{padding:2px 5px 0 0; margin-left:auto}
-.busy.inline s .lg{display:none}
-.busy.inline s .sm{display:inline}
+.busy.inline b{padding:2px 0 0 5px; min-width:0}
+.busy.inline s{padding:2px 5px 0 0; margin-left:auto; min-width:0}
 
 /* an open window is drawn as a measured span, not a block */
 .free{
@@ -296,7 +303,9 @@ button{cursor:pointer; border-radius:2px}
   letter-spacing:-.03em; white-space:nowrap}
 .free .rng{font-family:"IBM Plex Mono",monospace; font-size:9.5px; color:var(--faint); white-space:nowrap; margin-top:1px}
 .free.tiny::before{display:none}
-.free.tiny .rng, .free.short .rng{display:none}
+.free.tiny .rng, .free.short .rng, .free.narrow .rng{display:none}
+.free.bare .plate{display:none}
+.free.bare::before{display:none}
 .free.tiny .len{font-size:9.5px}
 .free.pick{
   background:color-mix(in oklab, var(--accent) 10%, var(--surface));
@@ -441,6 +450,25 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
 .hero .steps li{max-width:22ch; font-size:12.5px; color:var(--dim); border-top:1px solid var(--line2); padding-top:8px}
 .hero .steps b{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); margin-bottom:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+
+/* ============ phone ============
+   Last in the sheet on purpose: these override component rules above, and an
+   earlier media block would lose to them on equal specificity. */
+@media (max-width:640px){
+  .legend{display:none}
+  .calhead div{font-size:10px; letter-spacing:.07em; padding:7px 0 6px}
+  .gutter span{font-size:9px; right:5px; padding-top:1px}
+  .busy{border-radius:2px}
+  .busy b{font-size:10px; letter-spacing:.02em; padding:2px 3px 0}
+  .busy s{font-size:9px; padding:0 3px 0}
+  .busy.inline b{padding:2px 0 0 4px}
+  .busy.inline s{padding:2px 4px 0 0}
+  .free .len{font-size:10.5px}
+  .free .rng{font-size:9px}
+  .free .plate{padding:1px 5px}
+  .day .rules i.half{display:none}          /* half hour rules are noise at this size */
+  .stage{padding:12px 10px 30px}
+}
 </style>
 
 <div class="bar">
@@ -1286,17 +1314,58 @@ window.OVERLAP_CONFIG = {
     return { items: items, cols: cols };
   }
 
-  /* Course code and time are shown whenever they actually fit the drawn block,
-     which depends on the window, not on how many schedules are loaded. */
+  /* Text is kept only while it actually fits the drawn block. A guess from the
+     block width cut times off mid-character on a phone; this measures instead,
+     and steps down through the full time, a clipped one, then none at all. */
+  function overflows(n) { return n && n.scrollWidth > n.clientWidth + 1; }
+
   function fitLabels(root) {
-    var bs = root.querySelectorAll('.busy');
-    for (var i = 0; i < bs.length; i++) {
-      var b = bs[i], w = b.offsetWidth, h = b.offsetHeight;
-      // too short to stack the two lines, but wide enough to sit them side by side
-      var inline = h < 27 && h >= 13 && w >= 104;
-      b.classList.toggle('inline', inline);
-      b.classList.toggle('no-code', w < 34 || h < 13);
-      b.classList.toggle('no-time', !inline && (w < 58 || h < 27));
+    var bs = root.querySelectorAll('.busy'), i, b;
+
+    for (i = 0; i < bs.length; i++) {
+      b = bs[i];
+      b.classList.remove('no-code', 'no-time', 'inline', 'tshort');
+      var h = b.offsetHeight, w = b.offsetWidth;
+      if (w < 30 || h < 13) b.classList.add('no-code', 'no-time');  // nothing legible fits
+      else if (h < 27) b.classList.add('inline', 'tshort');         // one line carries both
+    }
+
+    /* The course code is what the block is for, so the time gives way first:
+       full range, then a clipped one, then none. The code itself is never
+       dropped for want of room, it just ellipsises. */
+    for (i = 0; i < bs.length; i++) {
+      b = bs[i];
+      if (b.classList.contains('no-time')) continue;
+      var t = b.querySelector('s');
+      if (!overflows(t)) continue;
+      b.classList.add('tshort');
+      if (overflows(t)) b.classList.add('no-time');
+    }
+    for (i = 0; i < bs.length; i++) {
+      b = bs[i];                                   // sharing one line, a long code crowds the time out
+      if (b.classList.contains('inline') && !b.classList.contains('no-time') &&
+          overflows(b.querySelector('b'))) {
+        b.classList.add('no-time');
+      }
+    }
+
+    // the same for an open window: drop the range, then the whole plate
+    var fs = root.querySelectorAll('.free');
+    for (i = 0; i < fs.length; i++) {
+      var f = fs[i], plate = f.querySelector('.plate');
+      f.classList.remove('narrow', 'bare');
+      if (!plate) continue;
+      if (plate.scrollWidth > f.clientWidth - 6) f.classList.add('narrow');
+      if (plate.scrollWidth > f.clientWidth - 6) f.classList.add('bare');
+    }
+
+    // say when the week runs past the edge, since a phone shows no scrollbar
+    var ws = root.querySelectorAll('.calwrap');
+    for (i = 0; i < ws.length; i++) {
+      var runs = ws[i].scrollWidth > ws[i].clientWidth + 2;
+      if (ws[i].parentNode && ws[i].parentNode.classList) {
+        ws[i].parentNode.classList.toggle('more', runs);
+      }
     }
   }
   /* A clash-heavy week gets a wider grid and a scrollbar (.calwrap scrolls)
@@ -1334,7 +1403,8 @@ window.OVERLAP_CONFIG = {
     var wrap = el('div', 'calwrap');
     var cal = el('div', 'cal' + (opts.compact ? ' compact' : ''));
     cal.style.setProperty('--ndays', days.length);
-    cal.style.setProperty('--gutter', (opts.gutter || 46) + 'px');
+    var gutterW = opts.gutter || ((window.innerWidth || 1200) < 700 ? 34 : 46);
+    cal.style.setProperty('--gutter', gutterW + 'px');
 
     var layouts = {}, maxCols = 1;
     days.forEach(function (d) {
@@ -1343,7 +1413,7 @@ window.OVERLAP_CONFIG = {
     });
     cal.dataset.cols = maxCols;
     cal.dataset.ndays = days.length;
-    cal.dataset.gutter = (opts.gutter || 46);
+    cal.dataset.gutter = gutterW;
     sizeCal(cal);
 
     var head = el('div', 'calhead');
@@ -1434,8 +1504,11 @@ window.OVERLAP_CONFIG = {
 
     cal.appendChild(body);
     wrap.appendChild(cal);
+    var box = el('div', 'calbox');                 // the hint must sit outside the scroller
+    box.appendChild(el('div', 'calhint', 'Swipe for the rest of the week'));
+    box.appendChild(wrap);
     queueFit();
-    return wrap;
+    return box;
   }
 
   /* ---------- course grouping ---------- */
