@@ -2097,7 +2097,7 @@ window.OVERLAP_CONFIG = {
   /* ================= add / edit flow ================= */
   function openAdd() {
     var m = modal('Add a schedule', { width: 560 });
-    var draft = { name: '', color: nextColor(), me: S.people.length === 0, thumbs: [], rows: [] };
+    var draft = { name: '', color: nextColor(), me: S.people.length === 0, thumbs: [], rows: [], shareTo: '' };
 
     var f1 = el('div', 'field');
     f1.appendChild(el('label', '', 'Whose schedule is this?'));
@@ -2205,7 +2205,7 @@ window.OVERLAP_CONFIG = {
   function openEditor(person) {
     var draft = {
       name: person.name, color: person.color, me: person.me, thumbs: person.thumbs || [],
-      rows: [], editing: person
+      shareTo: person.shareTo || '', rows: [], editing: person
     };
     openReview(draft, groupMeets(person.meets).map(function (g) {
       return { code: g.code, sect: g.sect, days: g.days.slice(), start: g.start, end: g.end, flag: false };
@@ -2223,6 +2223,25 @@ window.OVERLAP_CONFIG = {
     var nameIn = el('input'); nameIn.type = 'text'; nameIn.value = draft.name; nameIn.placeholder = 'Name';
     nameIn.oninput = function () { draft.name = nameIn.value; };
     f1.appendChild(nameIn); top.appendChild(f1);
+
+    /* Someone you added has no account, so they cannot join a group themselves.
+       Sharing puts a copy in the group for everyone else to see. */
+    var myGroups = (window.__CLOUD__ && window.__CLOUD__.groupList) ? window.__CLOUD__.groupList() : [];
+    if (myGroups.length && !draft.me) {
+      var f3 = el('div', 'field'); f3.style.cssText = 'margin:0;flex:1;min-width:190px';
+      f3.appendChild(el('label', '', 'Share with'));
+      var gsel = el('select');
+      var o0 = el('option', '', 'Just me'); o0.value = '';
+      gsel.appendChild(o0);
+      myGroups.forEach(function (g) {
+        var o = el('option', '', g.name); o.value = g.id;
+        gsel.appendChild(o);
+      });
+      gsel.value = draft.shareTo || '';
+      gsel.onchange = function () { draft.shareTo = gsel.value; };
+      f3.appendChild(gsel);
+      top.appendChild(f3);
+    }
     var f2 = el('div', 'field'); f2.style.margin = '0';
     f2.appendChild(el('label', '', 'Colour'));
     var sw = el('div', 'swatches');
@@ -2314,9 +2333,14 @@ window.OVERLAP_CONFIG = {
     if (draft.editing) {
       var del = el('button', 'btn danger', 'Remove person');
       del.onclick = function () {
-        S.people = S.people.filter(function (p) { return p.id !== draft.editing.id; });
-        delete S.off[draft.editing.id];
+        var gone = draft.editing;
+        S.people = S.people.filter(function (p) { return p.id !== gone.id; });
+        delete S.off[gone.id];
         save(); m.close(); renderAll();
+        if (gone.shareTo && window.__CLOUD__ && window.__CLOUD__.syncGuest) {
+          gone.shareTo = '';
+          window.__CLOUD__.syncGuest(gone);
+        }
       };
       m.foot.appendChild(del);
     }
@@ -2337,16 +2361,21 @@ window.OVERLAP_CONFIG = {
       });
       if (!meets.length) { alert('Add at least one class with a course name and a valid time.'); return; }
       var name = (draft.name || '').trim() || 'Untitled';
+      var person;
       if (draft.editing) {
-        draft.editing.name = name; draft.editing.color = draft.color; draft.editing.meets = meets;
+        person = draft.editing;
+        person.name = name; person.color = draft.color; person.meets = meets;
+        person.shareTo = draft.shareTo || '';
       } else {
-        S.people.push({
+        person = {
           id: uid(), name: name, color: draft.color, me: !!draft.me,
-          thumbs: (draft.thumbs || []).slice(0, 2), meets: meets
-        });
+          thumbs: (draft.thumbs || []).slice(0, 2), meets: meets, shareTo: draft.shareTo || ''
+        };
+        S.people.push(person);
       }
       autoFitWindow();
       save(); m.close(); renderAll();
+      if (window.__CLOUD__ && window.__CLOUD__.syncGuest) window.__CLOUD__.syncGuest(person);
     };
     m.foot.appendChild(ok);
   }
@@ -2636,7 +2665,7 @@ window.OVERLAP_CONFIG = {
   function slimPeople(list) {
     return list.map(function (p) {
       // thumbs are full screenshots; far too large to ship on every edit
-      return { id: p.id, name: p.name, color: p.color, me: !!p.me, meets: p.meets };
+      return { id: p.id, name: p.name, color: p.color, me: !!p.me, meets: p.meets, shareTo: p.shareTo || '' };
     });
   }
 
@@ -2717,6 +2746,27 @@ window.OVERLAP_CONFIG = {
     }, 900);
   }
 
+  /* ---------- people you added, shared into a group ----------
+     They have no account, so they cannot be group_members. A copy of the
+     schedule goes in group_guests instead, readable by that group only. */
+  async function syncGuest(p) {
+    if (!me || !p) return;
+    var del = await sb.from('group_guests').delete().eq('added_by', me.id).eq('person_id', p.id);
+    if (del.error) { warn('could not update sharing for ' + p.name, del.error); return; }
+    if (!p.shareTo) { await pull(); return; }
+    var ins = await sb.from('group_guests').insert({
+      group_id: p.shareTo, added_by: me.id, person_id: p.id,
+      person: { id: p.id, name: p.name, color: p.color, meets: p.meets },
+      updated_at: new Date().toISOString()
+    });
+    if (ins.error) warn('could not share ' + p.name + ' with the group', ins.error);
+    await pull();
+  }
+
+  function groupList() {
+    return me ? groups.map(function (g) { return { id: g.id, name: g.name }; }) : [];
+  }
+
   /* ---------- everyone else ---------- */
   async function pull() {
     if (!me || pulling) return;
@@ -2743,6 +2793,18 @@ window.OVERLAP_CONFIG = {
             meets: row.meets, thumbs: [], groups: byUser[row.user_id] || []
           };
         });
+
+      // people a groupmate added from a screenshot; yours are already local
+      var gg = await sb.from('group_guests').select('group_id, added_by, person');
+      (gg.data || []).forEach(function (row) {
+        if (row.added_by === mineId) return;
+        var g = row.person || {};
+        O.S.cloud.push({
+          id: 'g_' + row.group_id + '_' + (g.id || ''), cloud: true, guest: true,
+          name: g.name || 'Someone', color: g.color || O.PALETTE[2],
+          meets: g.meets || [], thumbs: [], groups: [row.group_id]
+        });
+      });
       try { localStorage.setItem(CACHE, JSON.stringify(O.S.cloud)); } catch (e) { }
       O.autoFitWindow();
       O.renderAll();
@@ -2951,7 +3013,8 @@ window.OVERLAP_CONFIG = {
     m.foot.appendChild(save);
   }
 
-  window.__CLOUD__ = { init: init, onLocalChange: onLocalChange, pull: pull };
+  window.__CLOUD__ = { init: init, onLocalChange: onLocalChange, pull: pull,
+    groupList: groupList, syncGuest: syncGuest };
 })();
 
 </script>
