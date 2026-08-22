@@ -451,6 +451,124 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
 .hero .steps b{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); margin-bottom:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
 
+/* ============ landing ============
+   Shown before there is anything to show: no schedules and not signed in.
+   Sign in is the only filled accent on the page, four times over. */
+body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:none}
+#landing{background:var(--surface); min-height:100vh; padding-bottom:40px}
+.ld-wrap{max-width:1160px; margin:0 auto; padding:0 40px}
+.ld-nav{
+  position:sticky; top:0; z-index:20; border-bottom:1px solid var(--rule);
+  background:color-mix(in oklab, var(--surface) 88%, transparent); backdrop-filter:blur(14px);
+}
+.ld-navin{display:flex; align-items:center; gap:14px; padding-top:14px; padding-bottom:14px}
+.ld-mark{width:20px; height:20px; border-radius:6px; background:var(--accent); flex:none}
+.ld-mark.sm{width:16px; height:16px; border-radius:5px}
+.ld-name{font-size:16.5px; font-weight:600; letter-spacing:-.01em}
+.ld-name.sm{font-size:14px; font-weight:500}
+.ld-for{font-size:13px; color:var(--faint); border-left:1px solid var(--line); padding-left:14px}
+.ld-for.plain{border:0; padding:0}
+.ld-links{display:flex; align-items:center; gap:20px; margin-left:auto}
+.ld-links a{font-size:14px; color:var(--dim); text-decoration:none}
+.ld-links a:hover{color:var(--ink)}
+.ld-link{border:0; background:transparent; color:var(--accent); font-size:13.5px; font-weight:500; padding:0}
+
+.ld-hero{display:grid; grid-template-columns:minmax(0,1fr) 470px; gap:56px;
+  align-items:start; padding-top:64px}
+.ld-copy h1{margin:0; font-size:54px; font-weight:600; line-height:1.04; letter-spacing:-.03em; max-width:19ch}
+.ld-copy p{margin:20px 0 0; font-size:18px; line-height:1.55; color:var(--dim); max-width:52ch}
+.ld-cta{display:flex; align-items:center; gap:12px; margin-top:30px; flex-wrap:wrap}
+.ld-big{
+  border:0; background:var(--accent); color:#fff; border-radius:13px; padding:0 24px; height:58px;
+  font-size:16.5px; font-weight:500; display:flex; align-items:center; gap:11px;
+}
+.ld-big:hover{background:var(--accent-ink)}
+.ld-big.w{width:100%; justify-content:center; height:50px; font-size:15.5px; margin-top:16px}
+.ld-big .g{width:22px; height:22px; border-radius:99px; background:#fff; color:var(--accent);
+  display:grid; place-items:center; font-size:12px; font-weight:700; flex:none}
+.ld-alt{border:1px solid var(--line2); background:var(--surface); color:var(--ink);
+  border-radius:13px; padding:0 22px; height:58px; font-size:16px; font-weight:450}
+.ld-alt:hover{border-color:var(--dim)}
+.ld-re{display:flex; align-items:center; gap:9px; margin-top:14px; font-size:13.5px; color:var(--faint)}
+.ld-re .tick{width:16px; height:16px; border-radius:5px; display:grid; place-items:center; font-size:10px;
+  color:var(--good); background:color-mix(in oklab, var(--good) 10%, var(--surface));
+  border:1px solid color-mix(in oklab, var(--good) 30%, transparent)}
+.ld-proof{display:flex; gap:36px; margin-top:44px; padding-top:26px; border-top:1px solid var(--rule); flex-wrap:wrap}
+.ld-proof b{display:block; font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:500; letter-spacing:-.02em}
+.ld-proof span{display:block; font-size:13px; color:var(--faint); margin-top:3px}
+
+.ld-card{border:1px solid var(--line); border-radius:20px; background:var(--surface); overflow:hidden;
+  box-shadow:0 24px 60px -30px rgba(0,0,0,.3)}
+.ld-card-h{padding:15px 18px; border-bottom:1px solid var(--rule); display:flex; align-items:center; gap:10px}
+.ld-card-h b{font-size:14.5px; font-weight:600}
+.ld-card-h span{font-size:12.5px; color:var(--faint)}
+.ld-card-h i{font-style:normal; font-size:12px; font-weight:500; margin-left:auto; border-radius:99px; padding:5px 10px;
+  color:var(--accent-ink); background:color-mix(in oklab, var(--accent) 8%, var(--surface))}
+.ld-grid{display:grid; grid-template-columns:34px repeat(5,1fr)}
+.ld-gut{position:relative}
+.ld-gut span{position:absolute; right:6px; font-family:"IBM Plex Mono",monospace; font-size:9.5px;
+  color:var(--faint); transform:translateY(-5px)}
+.ld-day{position:relative; border-left:1px solid var(--rule)}
+.ld-day .dow{position:absolute; left:0; right:0; top:0; text-align:center; font-size:10.5px; font-weight:500;
+  color:var(--faint); letter-spacing:.06em; padding-top:9px}
+.ld-busy{position:absolute; left:3px; right:3px; border-radius:5px;
+  background:color-mix(in oklab, var(--ink) 8%, var(--surface))}
+.ld-free{position:absolute; left:2px; right:2px; border-radius:7px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; overflow:hidden;
+  background:color-mix(in oklab, var(--accent) 7%, var(--surface));
+  border:1px solid color-mix(in oklab, var(--accent) 24%, transparent)}
+.ld-free b{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:500; color:var(--accent-ink)}
+.ld-free span{font-size:8.5px; margin-top:1px; color:color-mix(in oklab, var(--accent-ink) 70%, transparent)}
+.ld-card-f{border-top:1px solid var(--rule); padding:13px 18px; display:flex; align-items:center; gap:12px;
+  background:var(--raise)}
+.ld-card-f span{display:block; font-size:12px; color:var(--faint)}
+.ld-card-f b{display:block; font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:500; margin-top:2px}
+.ld-open{border:0; background:var(--ink); color:var(--surface); border-radius:10px; padding:9px 14px;
+  font-size:13.5px; font-weight:500; margin-left:auto}
+
+#how, #privacy{padding-top:86px; scroll-margin-top:80px}
+.ld-kick{font-size:12.5px; font-weight:500; color:var(--faint)}
+#landing h2{margin:8px 0 0; font-size:32px; font-weight:600; letter-spacing:-.02em}
+#landing h2.sm{font-size:25px}
+.ld-steps{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:26px}
+.ld-step{border:1px solid var(--line); border-radius:18px; background:var(--raise); padding:21px}
+.ld-step i{font-style:normal; font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--accent-ink)}
+.ld-step b{display:block; font-size:18px; font-weight:600; margin-top:10px}
+.ld-step p{margin:7px 0 0; font-size:14.5px; line-height:1.5; color:var(--dim)}
+.ld-step u{display:block; text-decoration:none; border-top:1px solid var(--rule); margin-top:16px; padding-top:13px;
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint)}
+.ld-priv{border:1px solid var(--line); border-radius:20px; background:var(--surface); padding:28px 30px;
+  display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:44px; align-items:center; margin-top:26px}
+.ld-priv ul{list-style:none; margin:18px 0 0; padding:0; display:flex; flex-direction:column; gap:12px}
+.ld-priv li{position:relative; padding-left:18px; font-size:14.5px; line-height:1.5; color:var(--ink); max-width:62ch}
+.ld-priv li::before{content:""; position:absolute; left:0; top:8px; width:7px; height:7px; border-radius:2px;
+  background:var(--accent)}
+.ld-ready{border:1px solid color-mix(in oklab, var(--accent) 24%, transparent); border-radius:16px; padding:21px;
+  background:color-mix(in oklab, var(--accent) 6%, var(--surface))}
+.ld-ready b{font-size:16.5px; font-weight:600}
+.ld-ready p{margin:6px 0 0; font-size:14px; line-height:1.5; color:var(--accent-ink)}
+.ld-fine{display:block; font-size:12.5px; color:var(--faint); margin-top:10px; text-align:center}
+.ld-foot{display:flex; align-items:center; gap:14px; border-top:1px solid var(--rule);
+  margin-top:64px; padding-top:34px}
+
+@media (max-width:960px){
+  .ld-hero{grid-template-columns:minmax(0,1fr); gap:36px}
+  .ld-priv{grid-template-columns:minmax(0,1fr); gap:26px}
+  .ld-steps{grid-template-columns:minmax(0,1fr)}
+  .ld-copy h1{font-size:40px}
+}
+@media (max-width:640px){
+  .ld-wrap{padding:0 18px}
+  .ld-copy h1{font-size:33px}
+  .ld-copy p{font-size:16px}
+  .ld-for, .ld-links a{display:none}
+  .ld-foot .ld-for{display:none}
+  .ld-hero{padding-top:34px}
+  #how, #privacy{padding-top:56px}
+  .ld-big, .ld-alt{width:100%; justify-content:center}
+  .ld-proof{gap:22px}
+}
+
 /* the inspector side reads as prose, not as a dense stack of labels */
 .rail-r .panel-h h2{
   font-family:"IBM Plex Sans",sans-serif; font-size:14.5px; font-weight:600;
@@ -709,6 +827,98 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
 
 <div class="alertbar" id="alertbar" hidden></div>
 <div class="tabbar" id="tabbar" hidden></div>
+
+<div id="landing" hidden>
+  <div class="ld-nav">
+    <div class="ld-wrap ld-navin">
+      <span class="ld-mark"></span>
+      <span class="ld-name">Overlap</span>
+      <span class="ld-for">for UW–Madison</span>
+      <nav class="ld-links">
+        <a href="#how">How it works</a>
+        <a href="#privacy">Your data</a>
+        <button class="btn" data-signin>Sign in</button>
+        <button class="btn solid" data-signin>Get your week</button>
+      </nav>
+    </div>
+  </div>
+
+  <div class="ld-wrap ld-hero">
+    <div class="ld-copy">
+      <h1>The hour you’re all free, without the group chat.</h1>
+      <p>Send a screenshot of everyone’s schedule. Overlap reads the courses, lines up the week,
+         and shows the gaps you actually share — lunch on Monday, three hours on Friday.</p>
+      <div class="ld-cta">
+        <button class="ld-big" data-signin><span class="g">G</span>Sign in with your wisc.edu email</button>
+        <button class="ld-alt" data-add>Add a schedule</button>
+      </div>
+      <div class="ld-re"><span class="tick">✓</span>Free. Your schedule stays private until you share it.</div>
+      <div class="ld-proof">
+        <div><b>fast</b><span>to read a screenshot</span></div>
+        <div><b>6 – 9</b><span>shared windows in a typical week</span></div>
+        <div><b>0</b><span>accounts your friends need</span></div>
+      </div>
+    </div>
+
+    <div class="ld-card">
+      <div class="ld-card-h">
+        <b>Sellery 4W</b><span>a sample week</span><i>6 shared windows</i>
+      </div>
+      <div class="ld-grid" id="ldGrid"></div>
+      <div class="ld-card-f">
+        <div>
+          <span>Best window today</span>
+          <b>12:15 – 2:00 PM · all 5</b>
+        </div>
+        <button class="ld-open" data-signin>Open my week</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ld-wrap" id="how">
+    <div class="ld-kick">How it works</div>
+    <h2>Three steps, one minute</h2>
+    <div class="ld-steps">
+      <div class="ld-step"><i>01</i><b>Drop in a screenshot</b>
+        <p>A course list, a MyUW week, a photo of a printout.</p><u>jpg · png · paste text</u></div>
+      <div class="ld-step"><i>02</i><b>Check the rows</b>
+        <p>You confirm what we read. Anything uncertain is flagged.</p><u>edits take seconds</u></div>
+      <div class="ld-step"><i>03</i><b>Share a code</b>
+        <p>A short code in the group chat. Everyone lands in the same week.</p><u>guests work without accounts</u></div>
+    </div>
+  </div>
+
+  <div class="ld-wrap" id="privacy">
+    <div class="ld-priv">
+      <div>
+        <div class="ld-kick">Your data</div>
+        <h2 class="sm">Private by default</h2>
+        <ul>
+          <li>Your schedule is yours until you add it to a group.</li>
+          <li>People you add from a screenshot never need an account.</li>
+          <li>Leave a group and your times leave with you.</li>
+        </ul>
+      </div>
+      <div class="ld-ready">
+        <b>Ready when you are</b>
+        <p>Your groups follow you between laptop and phone.</p>
+        <button class="ld-big w" data-signin><span class="g">G</span>Sign in with wisc.edu</button>
+        <span class="ld-fine">Google account · no password to make</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ld-wrap ld-foot">
+    <span class="ld-mark sm"></span>
+    <span class="ld-name sm">Overlap</span>
+    <span class="ld-for plain">Made by students at UW–Madison</span>
+    <nav class="ld-links">
+      <a href="#privacy">Privacy</a>
+      <a href="#how">How it works</a>
+      <button class="ld-link" data-signin>Sign in</button>
+    </nav>
+  </div>
+</div>
 
 <div class="frame">
   <aside class="rail rail-l">
@@ -2198,6 +2408,95 @@ window.OVERLAP_CONFIG = {
     return host;
   }
 
+  /* ================= landing =================
+     What there is to see before there is anything to see. It stands in for the
+     old empty state, and steps aside the moment a schedule exists or someone
+     signs in. */
+  var entered = false;
+
+  function buildSampleWeek() {
+    var host = document.getElementById('ldGrid');
+    if (!host || host.childNodes.length) return;
+    var H0 = 9, H1 = 16, BODY = 312, PAD = 28, H = BODY + PAD;
+    var top = function (h) { return (PAD + (h - H0) * (BODY / (H1 - H0))) + 'px'; };
+    var hgt = function (a, b) { return ((b - a) * (BODY / (H1 - H0))) + 'px'; };
+    var shortH = function (a, b) {
+      var t = Math.round((b - a) * 60), hh = Math.floor(t / 60), m = t % 60;
+      return (hh ? hh + 'h' : '') + (hh && m ? ' ' : '') + (m ? m + 'm' : '');
+    };
+
+    var gut = el('div', 'ld-gut');
+    gut.style.height = H + 'px';
+    for (var h = H0; h < H1; h++) {
+      var d12 = h % 12 === 0 ? 12 : h % 12;
+      var lab = el('span', '', d12 + (h < 12 ? 'a' : 'p'));
+      lab.style.top = top(h);
+      gut.appendChild(lab);
+    }
+    host.appendChild(gut);
+
+    var raw = [
+      { dow: 'MON', busy: [[9, 12.25], [14, 15.75]], free: [[12.25, 14, 5]] },
+      { dow: 'TUE', busy: [[9, 9.75], [12.5, 15]], free: [[9.75, 12.5, 5], [15, 16, 4]] },
+      { dow: 'WED', busy: [[9, 12.25], [13.5, 14.75]], free: [[12.25, 13.5, 4]] },
+      { dow: 'THU', busy: [[9, 9.75], [11, 12.5]], free: [[12.5, 14.5, 5]] },
+      { dow: 'FRI', busy: [[9, 12.25]], free: [[12.25, 16, 5]] }
+    ];
+    raw.forEach(function (d) {
+      var col = el('div', 'ld-day');
+      col.style.height = H + 'px';
+      col.appendChild(el('div', 'dow', d.dow));
+      d.busy.forEach(function (b) {
+        var n = el('div', 'ld-busy');
+        n.style.top = top(b[0]); n.style.height = hgt(b[0], b[1]);
+        col.appendChild(n);
+      });
+      d.free.forEach(function (f) {
+        var n = el('div', 'ld-free');
+        n.style.top = top(f[0]); n.style.height = hgt(f[0], f[1]);
+        n.appendChild(el('b', '', shortH(f[0], f[1])));
+        n.appendChild(el('span', '', f[2] === 5 ? 'all 5' : f[2] + ' of 5'));
+        col.appendChild(n);
+      });
+      host.appendChild(col);
+    });
+  }
+
+  function updateLanding() {
+    var host = document.getElementById('landing');
+    if (!host) return;
+    var signedIn = !!(window.__CLOUD__ && window.__CLOUD__.signedIn && window.__CLOUD__.signedIn());
+    var show = !entered && !signedIn && !allPeople().length;
+    host.hidden = !show;
+    document.body.classList.toggle('landing-on', show);
+    if (show) buildSampleWeek();
+  }
+
+  function initLanding() {
+    var host = document.getElementById('landing');
+    if (!host) return;
+    host.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-signin],[data-add]');
+      if (!b) return;
+      if (b.hasAttribute('data-add')) {          // you can use it without an account
+        entered = true;
+        updateLanding();
+        openAdd();
+      } else {
+        openAccount();
+      }
+    });
+  }
+
+  /* the account modal lives in the cloud script, which may never load */
+  function openAccount() {
+    var btn = document.getElementById('btnAccount');
+    if (btn && !btn.hidden) { btn.click(); return; }
+    entered = true;                              // no sign-in available, go on in
+    updateLanding();
+    openAdd();
+  }
+
   /* ---------- sidebar nav ---------- */
   var NAV = [
     { id: 'overlap', label: 'Week', c: 'var(--accent)' },
@@ -2609,6 +2908,7 @@ window.OVERLAP_CONFIG = {
   }
 
   function renderAll() {
+    updateLanding();
     renderNav(); renderHead();
     renderPeople(); renderMain(); renderFindings(); updateSubline(); renderTabs();
     document.querySelector('.viewbar').style.display = allPeople().length ? '' : 'none';
@@ -3349,6 +3649,7 @@ window.OVERLAP_CONFIG = {
 
   function init() {
     load();
+    initLanding();
     initTheme();
     syncSelects();
 
@@ -3922,7 +4223,8 @@ window.OVERLAP_CONFIG = {
   }
 
   window.__CLOUD__ = { init: init, onLocalChange: onLocalChange, pull: pull,
-    groupList: groupList, groupCards: groupCards, syncGuest: syncGuest };
+    groupList: groupList, groupCards: groupCards, syncGuest: syncGuest,
+    signedIn: function () { return !!me; } };
 })();
 
 </script>
