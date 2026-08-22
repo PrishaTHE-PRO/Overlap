@@ -451,6 +451,109 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
 .hero .steps b{display:block; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); margin-bottom:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
 
+/* the inspector side reads as prose, not as a dense stack of labels */
+.rail-r .panel-h h2{
+  font-family:"IBM Plex Sans",sans-serif; font-size:14.5px; font-weight:600;
+  letter-spacing:-.01em; text-transform:none; color:var(--ink);
+}
+.rail-r .panel-h{padding:16px 18px 8px}
+
+/* those two lists were built for a 320px rail; give them room as cards */
+#togetherView #together{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px}
+#togetherView #together .trow{border:1px solid var(--line); border-radius:16px; padding:14px 16px}
+#togetherView #shared{max-width:620px}
+#togetherView #shared .srow{border:1px solid var(--line); border-radius:16px; padding:14px 16px}
+
+/* ============ desktop shell ============
+   A quiet sidebar, one week, one inspector answering whatever window was
+   clicked. The four stacked findings panels are gone. */
+.nav{display:flex; flex-direction:column; gap:2px; padding:14px 10px 6px}
+.nav button{
+  display:flex; align-items:center; gap:10px; border:0; background:transparent; color:var(--dim);
+  border-radius:9px; padding:8px 10px; font-size:14px; font-weight:500; text-align:left; min-height:36px;
+}
+.nav button:hover{background:var(--raise); color:var(--ink)}
+.nav button.on{background:var(--sunk); color:var(--ink)}
+.nav button i{width:15px; height:15px; border-radius:5px; flex:none; background:var(--nc)}
+.nav button span{flex:1; min-width:0}
+.nav button b{font-weight:400; font-size:12px; color:var(--faint)}
+
+.mhead{padding:2px 2px 18px; border-bottom:1px solid var(--rule); margin-bottom:18px}
+.mhead .kick{font-size:12.5px; font-weight:500; color:var(--faint)}
+.mhead h1{font-size:25px; font-weight:600; letter-spacing:-.02em; line-height:1.2; margin-top:2px}
+.sublabel{display:flex; align-items:baseline; gap:9px; font-size:12.5px; font-weight:500;
+  color:var(--faint); margin:0 2px 11px}
+
+.stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:18px}
+.stat{border:1px solid var(--line); border-radius:16px; padding:14px 16px; background:var(--surface)}
+.stat.hot{border-color:color-mix(in oklab, var(--accent) 26%, transparent);
+  background:color-mix(in oklab, var(--accent) 6%, var(--surface))}
+.stat .k{font-size:12.5px; font-weight:500; color:var(--faint)}
+.stat.hot .k{color:var(--accent-ink)}
+.stat .v{font-family:"IBM Plex Mono",monospace; font-size:20px; font-weight:500; letter-spacing:-.02em; margin-top:5px}
+.stat .s{font-size:13px; color:var(--dim); margin-top:2px}
+
+/* the week: one neutral band a day, tinted bands for shared time */
+.dw{border:1px solid var(--line); border-radius:18px; overflow:hidden; background:var(--surface)}
+.dw-h{display:grid; border-bottom:1px solid var(--line)}
+.dw-h div{padding:11px 0 10px; text-align:center; border-left:1px solid var(--rule)}
+.dw-h div:first-child{border-left:0}
+.dw-h .dow{font-size:11.5px; font-weight:500; color:var(--faint); letter-spacing:.06em}
+.dw-h .num{font-size:15px; font-weight:500; color:var(--dim); margin-left:7px}
+.dw-h .today{background:color-mix(in oklab, var(--accent) 3%, var(--surface))}
+.dw-h .today .dow, .dw-h .today .num{color:var(--accent); font-weight:600}
+.dw-b{display:grid}
+.dw-gut{position:relative}
+.dw-gut span{position:absolute; right:10px; font-family:"IBM Plex Mono",monospace; font-size:11px;
+  color:var(--faint); transform:translateY(-6px)}
+.dw-col{position:relative; border-left:1px solid var(--rule)}
+.dw-col.today{background:color-mix(in oklab, var(--accent) 2%, var(--surface))}
+.dw-col i.rule{position:absolute; left:0; right:0; height:0; border-top:1px solid var(--rule); opacity:.55}
+.dw-busy{
+  position:absolute; left:6px; right:6px; border-radius:8px; padding:5px 9px; overflow:hidden;
+  background:color-mix(in oklab, var(--ink) 8%, var(--surface));
+}
+.dw-busy b{display:block; font-size:11.5px; font-weight:500; color:var(--faint)}
+.dw-busy s{display:block; text-decoration:none; font-family:"IBM Plex Mono",monospace; font-size:10.5px;
+  color:var(--faint); opacity:.75; margin-top:1px}
+.dw-free{
+  position:absolute; left:5px; right:5px; border-radius:10px; padding:7px 10px; overflow:hidden;
+  text-align:left; cursor:pointer;
+  background:color-mix(in oklab, var(--accent) 7%, var(--surface));
+  border:1px solid color-mix(in oklab, var(--accent) 24%, transparent);
+}
+.dw-free:hover{border-color:color-mix(in oklab, var(--accent) 45%, transparent)}
+.dw-free.on{border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in oklab, var(--accent) 20%, transparent)}
+.dw-free b{display:block; font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:500;
+  color:var(--accent-ink); line-height:1.15}
+.dw-free s{display:block; text-decoration:none; font-size:11.5px; margin-top:2px;
+  color:color-mix(in oklab, var(--accent-ink) 72%, transparent)}
+.dw-free u{display:block; text-decoration:none; font-family:"IBM Plex Mono",monospace; font-size:10.5px;
+  margin-top:2px; color:color-mix(in oklab, var(--accent-ink) 62%, transparent)}
+.dw-legend{display:flex; gap:20px; align-items:center; margin:13px 4px 0; font-size:12px; color:var(--faint)}
+.dw-legend span{display:flex; align-items:center; gap:7px}
+.dw-legend i{width:16px; height:10px; border-radius:3px; display:inline-block}
+.dw-legend .right{margin-left:auto}
+
+/* the inspector, and the group cards its view shows */
+.insp .who{display:flex; flex-direction:row; flex-wrap:wrap; gap:7px; margin-top:14px}
+.insp .who span{display:flex; align-items:center; gap:7px; border:1px solid var(--line);
+  background:var(--raise); border-radius:999px; padding:6px 11px 6px 8px; font-size:13.5px}
+.insp .who span.out{color:var(--faint); background:transparent}
+.insp .who i{width:7px; height:7px; border-radius:99px; background:var(--pc)}
+.frow.pick{background:var(--sunk)}
+.gcards{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px}
+.gcard{border:1px solid var(--line); border-radius:18px; background:var(--surface); padding:16px 17px}
+.gcard .t{display:flex; align-items:center; gap:10px}
+.gcard .t b{font-size:17px; font-weight:600}
+.gcard .code{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--faint);
+  background:var(--sunk); border-radius:8px; padding:5px 9px; margin-left:auto}
+.gcard .m{font-size:13.5px; color:var(--dim); margin-top:7px}
+
+@media (max-width:860px){
+  .stats{grid-template-columns:minmax(0,1fr)}
+}
+
 /* ============ phone week ============
    Only drawn under 640px. One neutral band per day says someone is in class;
    the tinted bands are the windows everyone shares, which is the thing the
@@ -572,6 +675,8 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
    earlier media block would lose to them on equal specificity. */
 @media (max-width:640px){
   .legend{display:none}
+  .mhead{display:none}          /* the phone week carries its own heading */
+  .nav{display:none}            /* the tab bar is the phone's navigation */
   .calhead div{font-size:10px; letter-spacing:.07em; padding:7px 0 6px}
   .gutter span{font-size:9px; right:5px; padding-top:1px}
   .busy{border-radius:2px}
@@ -607,18 +712,50 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
 
 <div class="frame">
   <aside class="rail rail-l">
-    <section class="panel" id="peoplePanel">
-      <div class="panel-h"><h2>Who's in</h2><button class="btn quiet sm" id="btnAll" style="margin-left:auto">All</button></div>
-      <div class="panel-b panel-flush"><div id="people"></div></div>
-    </section>
+    <nav class="nav" id="nav"></nav>
     <section class="panel" id="groupPanel" hidden>
       <div class="panel-h"><h2>Groups</h2>
         <button class="btn quiet sm" id="btnJoinGroup" style="margin-left:auto">Join</button>
         <button class="btn quiet sm" id="btnNewGroup">New</button></div>
       <div class="panel-b panel-flush"><div id="groups"></div></div>
     </section>
+    <section class="panel" id="peoplePanel">
+      <div class="panel-h"><h2>Who's in</h2><button class="btn quiet sm" id="btnAll" style="margin-left:auto">All</button></div>
+      <div class="panel-b panel-flush"><div id="people"></div></div>
+    </section>
+  </aside>
+
+  <section class="stage">
+    <div class="mhead" id="mhead">
+      <div class="mh-t">
+        <div class="kick" id="headKick"></div>
+        <h1 id="headTitle">This week</h1>
+      </div>
+    </div>
+    <div class="viewbar" hidden>
+      <div class="seg" id="seg">
+        <button data-v="overlap" class="on">Overlap</button>
+        <button data-v="people">By person</button>
+      </div>
+    </div>
+    <div id="main"></div>
+    <div id="togetherView" hidden>
+      <div class="sublabel">In class together <span class="label" id="togCount"></span></div>
+      <div id="together"></div>
+      <div class="sublabel" style="margin-top:26px">Same course, different section</div>
+      <div id="shared"></div>
+    </div>
+    <div id="groupsView" hidden></div>
+  </section>
+
+  <aside class="rail rail-r">
+    <section class="panel"><div class="today-card" id="todayCard"></div></section>
+    <section class="panel">
+      <div class="panel-h"><h2>Next up</h2><span class="label" id="winCount" style="margin-left:auto"></span></div>
+      <div class="panel-b panel-flush"><div id="windows"></div></div>
+    </section>
     <section class="panel" id="windowPanel">
-      <div class="panel-h"><h2>Window</h2></div>
+      <div class="panel-h"><h2>Window rules</h2></div>
       <div class="panel-b">
         <div class="ctrl"><span>Day starts</span><select id="selStart"></select></div>
         <div class="ctrl"><span>Day ends</span><select id="selEnd"></select></div>
@@ -631,36 +768,6 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
           <option value="10" selected>10 min</option><option value="15">15 min</option>
         </select></div>
       </div>
-    </section>
-  </aside>
-
-  <section class="stage">
-    <div class="viewbar">
-      <div class="seg" id="seg">
-        <button data-v="overlap" class="on">Overlap</button>
-        <button data-v="people">By person</button>
-      </div>
-      <div class="legend" id="legend">
-        <span><i style="background:color-mix(in oklab, var(--accent) 4%, var(--surface)); box-shadow:0 1px 0 color-mix(in oklab, var(--accent) 30%, var(--surface)) inset, 0 -1px 0 color-mix(in oklab, var(--accent) 30%, var(--surface)) inset"></i>everyone free</span>
-        <span><i style="background:color-mix(in oklab, var(--accent) 10%, var(--surface)); box-shadow:0 1px 0 var(--accent) inset, 0 -1px 0 var(--accent) inset"></i>lunch or a long block</span>
-      </div>
-    </div>
-    <div id="main"></div>
-  </section>
-
-  <aside class="rail rail-r">
-    <section class="panel"><div class="today-card" id="todayCard"></div></section>
-    <section class="panel">
-      <div class="panel-h"><h2>Open windows</h2><span class="label" id="winCount" style="margin-left:auto"></span></div>
-      <div class="panel-b panel-flush"><div id="windows"></div></div>
-    </section>
-    <section class="panel">
-      <div class="panel-h"><h2>In class together</h2><span class="label" id="togCount" style="margin-left:auto"></span></div>
-      <div class="panel-b panel-flush"><div id="together"></div></div>
-    </section>
-    <section class="panel">
-      <div class="panel-h"><h2>Same course, apart</h2></div>
-      <div class="panel-b panel-flush"><div id="shared"></div></div>
     </section>
   </aside>
 </div>
@@ -1251,7 +1358,8 @@ window.OVERLAP_CONFIG = {
     dayStart: 8 * 60, dayEnd: 21 * 60, minLen: 45, buffer: 10,
     updatedAt: 0,                  // when this browser last edited, for device ordering
     groupView: 'all',              // 'all', 'local', or a group id
-    mtab: 'week'                   // phone tab: week, groups, together
+    mtab: 'week',                  // phone tab: week, groups, together
+    sel: null                      // the window the inspector is answering
   };
 
   function writeLocal() {
@@ -1972,6 +2080,194 @@ window.OVERLAP_CONFIG = {
     return host;
   }
 
+  /* ================= desktop week =================
+     Per person columns are what made a shared hour unreadable. One neutral
+     band a day says somebody is in class; the tinted bands are the shared
+     windows, and clicking one is what the inspector answers. */
+  function sameWin(a, b) {
+    return !!a && !!b && a.day === b.day && a.start === b.start && a.end === b.end;
+  }
+
+  function buildDesktopWeek(ppl, days) {
+    var host = el('div');
+    var dates = weekDates(days);
+    var today = new Date().getDay();
+    var wins = allWindows(ppl, days);
+
+    if (wins.length) {
+      var stats = el('div', 'stats');
+      var score = function (w) {
+        return (w.day === today ? 1000 : 0) + (w.lunch ? 300 : 0) + Math.min(w.len, 180);
+      };
+      var best = wins.slice().sort(function (a, b) { return score(b) - score(a); })[0];
+      var total = wins.reduce(function (n, w) { return n + w.len; }, 0);
+      var longest = wins.slice().sort(function (a, b) { return b.len - a.len; })[0];
+
+      function card(cls, k, v, sub) {
+        var c = el('div', 'stat' + (cls ? ' ' + cls : ''));
+        c.appendChild(el('div', 'k', k));
+        c.appendChild(el('div', 'v', v));
+        c.appendChild(el('div', 's', sub));
+        return c;
+      }
+      stats.appendChild(card('hot', best.day === today ? 'Best window today' : 'Best window this week',
+        hhmm(best.start) + ' \u2013 ' + hhmm(best.end),
+        (best.day === today ? '' : DAY_SHORT[best.day] + ' \u00B7 ') + dur(best.len) + ' \u00B7 ' +
+        (ppl.length === 1 ? 'you are free' : 'all ' + ppl.length + ' free')));
+      stats.appendChild(card('', 'Shared this week', dur(total),
+        'across ' + wins.length + (wins.length === 1 ? ' window' : ' windows')));
+      stats.appendChild(card('', 'Longest stretch',
+        DAY_SHORT[longest.day] + ' ' + hhmm(longest.start),
+        dur(longest.len) + ' \u00B7 ' + (ppl.length === 1 ? 'you are free' : 'all ' + ppl.length + ' free')));
+      host.appendChild(stats);
+    }
+
+    var ppm = 0.8, H = Math.round((S.dayEnd - S.dayStart) * ppm);
+    var cols = '52px repeat(' + days.length + ',1fr)';
+
+    var grid = el('div', 'dw');
+    var head = el('div', 'dw-h');
+    head.style.gridTemplateColumns = cols;
+    head.appendChild(el('div'));
+    days.forEach(function (d) {
+      var c = el('div', d === today ? 'today' : '');
+      c.appendChild(el('span', 'dow', DAY_SHORT[d].toUpperCase()));
+      c.appendChild(el('span', 'num', dates[d] ? String(dates[d].getDate()) : ''));
+      head.appendChild(c);
+    });
+    grid.appendChild(head);
+
+    var body = el('div', 'dw-b');
+    body.style.gridTemplateColumns = cols;
+    var gut = el('div', 'dw-gut');
+    gut.style.height = H + 'px';
+    for (var t = Math.ceil(S.dayStart / 60) * 60; t <= S.dayEnd; t += 60) {
+      var h12 = Math.floor(t / 60) % 12; if (h12 === 0) h12 = 12;
+      var lab = el('span', '', h12 + (t < 720 ? 'a' : 'p'));
+      lab.style.top = ((t - S.dayStart) * ppm) + 'px';
+      gut.appendChild(lab);
+    }
+    body.appendChild(gut);
+
+    days.forEach(function (d) {
+      var col = el('div', 'dw-col' + (d === today ? ' today' : ''));
+      col.style.height = H + 'px';
+      for (var t2 = Math.ceil(S.dayStart / 60) * 60; t2 <= S.dayEnd; t2 += 60) {
+        var r = el('i', 'rule');
+        r.style.top = ((t2 - S.dayStart) * ppm) + 'px';
+        col.appendChild(r);
+      }
+      busyBands(ppl, d).forEach(function (b) {
+        var n = el('div', 'dw-busy'), h = (b[1] - b[0]) * ppm;
+        n.style.top = ((b[0] - S.dayStart) * ppm) + 'px';
+        n.style.height = Math.max(h, 4) + 'px';
+        if (h >= 34) n.appendChild(el('b', '', 'someone in class'));
+        if (h >= 52) n.appendChild(el('s', '', hhmm(b[0]) + '\u2013' + hhmm(b[1])));
+        col.appendChild(n);
+      });
+      freeForDay(ppl, d).forEach(function (w) {
+        var win = { day: d, start: w[0], end: w[1], len: w[1] - w[0], lunch: isLunch(w) };
+        var h = (w[1] - w[0]) * ppm;
+        var f = el('div', 'dw-free' + (sameWin(S.sel, win) ? ' on' : ''));
+        f.style.top = ((w[0] - S.dayStart) * ppm) + 'px';
+        f.style.height = h + 'px';
+        f.appendChild(el('b', '', dur(win.len)));
+        if (h >= 44) f.appendChild(el('s', '', ppl.length === 1 ? 'you are free' : 'all ' + ppl.length + ' free'));
+        if (h >= 70) f.appendChild(el('u', '', hhmm(w[0]) + ' \u2013 ' + hhmm(w[1])));
+        f.onclick = function () { S.sel = win; renderAll(); };
+        col.appendChild(f);
+      });
+      body.appendChild(col);
+    });
+    grid.appendChild(body);
+    host.appendChild(grid);
+
+    var leg = el('div', 'dw-legend');
+    function key(bg, border, text) {
+      var sp = el('span'), i = el('i');
+      i.style.background = bg;
+      if (border) i.style.border = '1px solid ' + border;
+      sp.appendChild(i); sp.appendChild(document.createTextNode(text));
+      return sp;
+    }
+    leg.appendChild(key('color-mix(in oklab, var(--accent) 7%, var(--surface))',
+      'color-mix(in oklab, var(--accent) 24%, transparent)', 'everyone free'));
+    leg.appendChild(key('color-mix(in oklab, var(--ink) 8%, var(--surface))', '', 'someone in class'));
+    leg.appendChild(el('span', 'right', 'Windows shorter than ' + S.minLen + ' min are hidden'));
+    host.appendChild(leg);
+    return host;
+  }
+
+  /* ---------- sidebar nav ---------- */
+  var NAV = [
+    { id: 'overlap', label: 'Week', c: 'var(--accent)' },
+    { id: 'people', label: 'By person', c: '#3C6E9F' },
+    { id: 'together', label: 'Together', c: '#4B6B4E' },
+    { id: 'groups', label: 'Groups', c: '#8A5A2B' }
+  ];
+
+  function renderNav() {
+    var host = document.getElementById('nav');
+    if (!host) return;
+    host.innerHTML = '';
+    var ppl = active(), days = visibleDays();
+    var counts = {
+      overlap: ppl.length ? allWindows(ppl, days).length : 0,
+      people: allPeople().length,
+      together: ppl.length > 1 ? togetherSessions(ppl).length : 0,
+      groups: (window.__CLOUD__ && window.__CLOUD__.groupList) ? window.__CLOUD__.groupList().length : 0
+    };
+    NAV.forEach(function (n) {
+      if (n.id === 'groups' && !counts.groups && document.getElementById('groupPanel').hidden) return;
+      var b = el('button', S.view === n.id ? 'on' : '');
+      b.style.setProperty('--nc', n.c);
+      b.appendChild(el('i'));
+      b.appendChild(el('span', '', n.label));
+      if (counts[n.id]) b.appendChild(el('b', '', String(counts[n.id])));
+      b.onclick = function () { S.view = n.id; renderAll(); };
+      host.appendChild(b);
+    });
+  }
+
+  function renderHead() {
+    var days = visibleDays(), dates = weekDates(days);
+    var first = dates[days[0]], last = dates[days[days.length - 1]];
+    var span = first && last
+      ? MONTH_SHORT[first.getMonth()] + ' ' + first.getDate() + ' \u2013 ' +
+        (first.getMonth() === last.getMonth() ? '' : MONTH_SHORT[last.getMonth()] + ' ') + last.getDate()
+      : '';
+    var titles = { overlap: 'This week', people: 'By person', together: 'Together', groups: 'Groups' };
+    var kicks = {
+      overlap: span, people: allPeople().length + ' schedules',
+      together: 'Where your weeks already touch', groups: 'Codes and members'
+    };
+    var k = document.getElementById('headKick'), t = document.getElementById('headTitle');
+    if (k) k.textContent = kicks[S.view] || span;
+    if (t) t.textContent = titles[S.view] || 'This week';
+  }
+
+  function renderGroupsView() {
+    var host = document.getElementById('groupsView');
+    if (!host) return;
+    host.innerHTML = '';
+    var list = (window.__CLOUD__ && window.__CLOUD__.groupCards) ? window.__CLOUD__.groupCards() : [];
+    if (!list.length) {
+      host.appendChild(el('div', 'blank', 'You are not in a group yet. Make one and send the code to your friends, or join theirs.'));
+      return;
+    }
+    var wrap = el('div', 'gcards');
+    list.forEach(function (g) {
+      var c = el('div', 'gcard');
+      var t = el('div', 't');
+      t.appendChild(el('b', '', g.name));
+      t.appendChild(el('span', 'code', g.code || ''));
+      c.appendChild(t);
+      c.appendChild(el('div', 'm', (g.n || 0) + (g.n === 1 ? ' person' : ' people')));
+      wrap.appendChild(c);
+    });
+    host.appendChild(wrap);
+  }
+
   /* ---------- phone tab bar ---------- */
   var TABS = [
     { id: 'week', label: 'Week' }, { id: 'add', label: 'Add' },
@@ -2034,8 +2330,22 @@ window.OVERLAP_CONFIG = {
     var days = visibleDays();
     var ppl = active();
 
+    var tv = document.getElementById('togetherView');
+    var gv = document.getElementById('groupsView');
+    if (tv) tv.hidden = S.view !== 'together';
+    if (gv) gv.hidden = S.view !== 'groups';
+    if (S.view === 'together' || S.view === 'groups') {
+      if (S.view === 'groups') renderGroupsView();
+      return;                                    // those views live outside #main
+    }
+
     if (isPhone() && S.view === 'overlap' && allPeople().length) {
       host.appendChild(buildMobileWeek(ppl, days));
+      return;
+    }
+
+    if (S.view === 'overlap' && allPeople().length) {
+      host.appendChild(buildDesktopWeek(ppl, days));
       return;
     }
 
@@ -2123,6 +2433,34 @@ window.OVERLAP_CONFIG = {
 
     var tc = document.getElementById('todayCard');
     tc.innerHTML = '';
+    tc.className = 'today-card insp';
+
+    // a window was clicked, so answer that one rather than the clock
+    if (S.sel && ppl.length) {
+      var sel = S.sel, dts = weekDates(days), sd = dts[sel.day];
+      tc.appendChild(el('span', 'label', DAY_FULL[sel.day] +
+        (sd ? ', ' + MONTH_SHORT[sd.getMonth()] + ' ' + sd.getDate() : '')));
+      tc.appendChild(el('div', 'big', hhmm(sel.start) + ' \u2013 ' + hhmm(sel.end)));
+      tc.appendChild(el('div', 'sub', dur(sel.len) + ' \u00B7 ' +
+        (ppl.length === 1 ? 'you are free' : 'nobody has class')));
+      var who = el('div', 'who');
+      ppl.forEach(function (p) {
+        var chip = el('span');
+        chip.style.setProperty('--pc', p.color);
+        chip.appendChild(el('i'));
+        chip.appendChild(document.createTextNode(p.name));
+        who.appendChild(chip);
+      });
+      tc.appendChild(who);
+      var clr = el('button', 'btn quiet sm', 'Back to today');
+      clr.style.marginTop = '14px';
+      clr.onclick = function () { S.sel = null; renderAll(); };
+      tc.appendChild(clr);
+      renderWindowList(ppl, days);
+      renderTogetherPanels(ppl);
+      return;
+    }
+
     tc.appendChild(el('span', 'label', DAY_FULL[today]));
     if (!ppl.length) {
       tc.appendChild(el('div', 'big none', 'Nobody selected'));
@@ -2148,6 +2486,11 @@ window.OVERLAP_CONFIG = {
       }
     }
 
+    renderWindowList(ppl, days);
+    renderTogetherPanels(ppl);
+  }
+
+  function renderWindowList(ppl, days) {
     var wins = ppl.length ? allWindows(ppl, days) : [];
     var host = document.getElementById('windows');
     host.innerHTML = '';
@@ -2159,7 +2502,9 @@ window.OVERLAP_CONFIG = {
     } else {
       wins.sort(function (a, b) { return a.day - b.day || a.start - b.start; });
       wins.slice(0, 16).forEach(function (w) {
-        var it = el('div', 'frow');
+        var it = el('div', 'frow' + (sameWin(S.sel, w) ? ' pick' : ''));
+        it.style.cursor = 'pointer';
+        it.onclick = function () { S.sel = w; renderAll(); };
         it.appendChild(el('div', 'd', DAY_SHORT[w.day]));
         var t = el('div', 't');
         t.appendChild(el('div', 'r', hhmm(w.start) + ' \u2013 ' + hhmm(w.end)));
@@ -2172,6 +2517,9 @@ window.OVERLAP_CONFIG = {
       });
     }
 
+  }
+
+  function renderTogetherPanels(ppl) {
     /* in class together */
     var tg = document.getElementById('together');
     tg.innerHTML = '';
@@ -2261,6 +2609,7 @@ window.OVERLAP_CONFIG = {
   }
 
   function renderAll() {
+    renderNav(); renderHead();
     renderPeople(); renderMain(); renderFindings(); updateSubline(); renderTabs();
     document.querySelector('.viewbar').style.display = allPeople().length ? '' : 'none';
   }
@@ -3016,8 +3365,7 @@ window.OVERLAP_CONFIG = {
       var b = e.target.closest('button[data-v]'); if (!b) return;
       S.view = b.dataset.v;
       Array.prototype.forEach.call(this.children, function (n) { n.classList.toggle('on', n === b); });
-      document.getElementById('legend').style.visibility = S.view === 'overlap' ? '' : 'hidden';
-      renderMain();
+      renderAll();
     };
     ['selStart', 'selEnd', 'selMin', 'selBuf'].forEach(function (id) {
       document.getElementById(id).onchange = function () {
@@ -3280,6 +3628,15 @@ window.OVERLAP_CONFIG = {
 
   function groupList() {
     return me ? groups.map(function (g) { return { id: g.id, name: g.name }; }) : [];
+  }
+
+  function groupCards() {
+    if (!me) return [];
+    return groups.map(function (g) {
+      var n = 0;
+      O.S.cloud.forEach(function (c) { if ((c.groups || []).indexOf(g.id) >= 0) n++; });
+      return { id: g.id, name: g.name, code: g.join_code, n: n + 1 };   // members plus you
+    });
   }
 
   /* ---------- everyone else ---------- */
@@ -3565,7 +3922,7 @@ window.OVERLAP_CONFIG = {
   }
 
   window.__CLOUD__ = { init: init, onLocalChange: onLocalChange, pull: pull,
-    groupList: groupList, syncGuest: syncGuest };
+    groupList: groupList, groupCards: groupCards, syncGuest: syncGuest };
 })();
 
 </script>
