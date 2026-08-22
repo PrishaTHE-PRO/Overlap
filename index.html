@@ -778,14 +778,9 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 /* one screen at a time, chosen by the tab bar */
 @media (max-width:640px){
   body.has-tabs .stage{padding-bottom:96px}
-  body.has-tabs .rail-r .panel:first-child{border-top:0}
-  body.mt-week .rail-l, body.mt-week .rail-r{display:none}
-  body.mt-groups .stage, body.mt-groups .rail-r, body.mt-groups #peoplePanel{display:none}
-  body.mt-groups .rail-l{border-top:0; padding-bottom:96px}
-  body.mt-together .stage, body.mt-together .rail-l{display:none}
-  body.mt-together .rail-r{border-top:0; padding-bottom:96px}
-  body.mt-groups #groupPanel[hidden]{display:block}
-  body.mt-groups #groupPanel[hidden] .panel-b{display:none}
+  body.has-tabs .rail-l, body.has-tabs .rail-r{display:none}   /* the tabs are the navigation */
+  body.has-tabs .mhead{display:block; padding-bottom:14px}
+  body.has-tabs.mt-week .mhead{display:none}                   /* the week draws its own */
 }
 
 /* ============ phone ============
@@ -2517,7 +2512,6 @@ window.OVERLAP_CONFIG = {
       groups: (window.__CLOUD__ && window.__CLOUD__.groupList) ? window.__CLOUD__.groupList().length : 0
     };
     NAV.forEach(function (n) {
-      if (n.id === 'groups' && !counts.groups && document.getElementById('groupPanel').hidden) return;
       var b = el('button', S.view === n.id ? 'on' : '');
       b.style.setProperty('--nc', n.c);
       b.appendChild(el('i'));
@@ -2549,6 +2543,21 @@ window.OVERLAP_CONFIG = {
     var host = document.getElementById('groupsView');
     if (!host) return;
     host.innerHTML = '';
+    var signedIn = !!(window.__CLOUD__ && window.__CLOUD__.signedIn && window.__CLOUD__.signedIn());
+    if (!signedIn) {
+      var b = el('div', 'blank');
+      b.appendChild(el('strong', '', 'Sign in to use groups'));
+      b.appendChild(document.createTextNode(
+        'A group is a short code you send your friends, so everyone\u2019s free time lands in the same week. ' +
+        'Your own schedules keep working without one.'));
+      var go = el('button', 'btn solid');
+      go.textContent = 'Sign in';
+      go.style.cssText = 'display:block; margin-top:14px';   // .blank is a text flow
+      go.onclick = function () { openAccount(); };
+      b.appendChild(go);
+      host.appendChild(b);
+      return;
+    }
     var list = (window.__CLOUD__ && window.__CLOUD__.groupCards) ? window.__CLOUD__.groupCards() : [];
     if (!list.length) {
       host.appendChild(el('div', 'blank', 'You are not in a group yet. Make one and send the code to your friends, or join theirs.'));
@@ -2616,7 +2625,8 @@ window.OVERLAP_CONFIG = {
       b.onclick = function () {
         if (t.id === 'add') { openAdd(); return; }   // a step, not a place
         S.mtab = t.id;
-        renderTabs();
+        S.view = t.id === 'week' ? 'overlap' : t.id;
+        renderAll();
         window.scrollTo(0, 0);
       };
       bar.appendChild(b);
