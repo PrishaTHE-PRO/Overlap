@@ -155,6 +155,15 @@ button{cursor:pointer; border-radius:2px}
 .swatch-sq{display:inline-block; width:9px; height:9px; flex:none; background:color-mix(in oklab, var(--pc) var(--pcw), var(--tint))}
 .prow .nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500}
 .prow .ct{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint)}
+.gfilter{display:flex; flex-wrap:wrap; gap:6px; padding:11px 16px 3px}
+.gfilter button{
+  font-family:"IBM Plex Sans Condensed",sans-serif; font-size:10.5px; font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; cursor:pointer;
+  border:1px solid var(--line2); border-radius:2px; background:transparent; color:var(--dim);
+  max-width:15ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.gfilter button:hover{color:var(--ink)}
+.gfilter button.on{background:var(--ink); color:var(--surface); border-color:var(--ink)}
 .prow .tick{
   width:15px; height:15px; flex:none; border:1px solid var(--line2); background:transparent;
   display:grid; place-items:center; font-size:10px; color:var(--surface); border-radius:1px; padding:0;
@@ -1076,13 +1085,14 @@ window.OVERLAP_CONFIG = {
     off: {},                       // id -> true when excluded
     view: 'overlap',
     dayStart: 8 * 60, dayEnd: 21 * 60, minLen: 45, buffer: 10,
-    updatedAt: 0                   // when this browser last edited, for device ordering
+    updatedAt: 0,                  // when this browser last edited, for device ordering
+    groupView: 'all'               // 'all', 'local', or a group id
   };
 
   function writeLocal() {
     try {
       localStorage.setItem(KEY, JSON.stringify({
-        people: S.people, off: S.off, updatedAt: S.updatedAt,
+        people: S.people, off: S.off, updatedAt: S.updatedAt, groupView: S.groupView,
         dayStart: S.dayStart, dayEnd: S.dayEnd, minLen: S.minLen, buffer: S.buffer
       }));
     } catch (e) { /* quota or blocked storage, session still works */ }
@@ -1107,6 +1117,7 @@ window.OVERLAP_CONFIG = {
         if (d.minLen) S.minLen = d.minLen;
         if (typeof d.buffer === 'number') S.buffer = d.buffer;
         S.updatedAt = d.updatedAt || 0;
+        S.groupView = d.groupView || 'all';
       }
     } catch (e) { /* corrupt payload, start clean rather than crash */ }
   }
@@ -1149,7 +1160,17 @@ window.OVERLAP_CONFIG = {
     for (var i = 0; i < S.people.length; i++) if (S.people[i].me) return S.people[i];
     return null;
   }
-  function active() { return allPeople().filter(function (p) { return !S.off[p.id]; }); }
+  /* People you added yourself belong to no group, so they stay on screen
+     whichever group is selected; only synced people are scoped. */
+  function inScope(p) {
+    var g = S.groupView || 'all';
+    if (g === 'all') return true;
+    if (!p.cloud) return true;
+    if (g === 'local') return false;
+    return (p.groups || []).indexOf(g) >= 0;
+  }
+  function visible() { return allPeople().filter(inScope); }
+  function active() { return visible().filter(function (p) { return !S.off[p.id]; }); }
 
   function visibleDays() {
     var has = {}, any = false;
@@ -1465,7 +1486,7 @@ window.OVERLAP_CONFIG = {
   function renderPeople() {
     var host = document.getElementById('people');
     host.innerHTML = '';
-    var roster = allPeople();
+    var roster = visible();
     if (!roster.length) {
       var e = el('div', 'blank');
       e.appendChild(el('strong', '', 'Nobody yet'));
@@ -2449,7 +2470,7 @@ window.OVERLAP_CONFIG = {
     document.getElementById('btnAdd').onclick = openAdd;
     document.getElementById('btnData').onclick = openData;
     document.getElementById('btnAll').onclick = function () {
-      var roster = allPeople();
+      var roster = visible();
       var anyOff = roster.some(function (p) { return S.off[p.id]; });
       S.off = {};
       if (!anyOff) roster.forEach(function (p, i) { if (i > 0) S.off[p.id] = true; });
@@ -2482,7 +2503,7 @@ window.OVERLAP_CONFIG = {
 
     renderAll();
     window.__OVERLAP__ = { S: S, renderAll: renderAll, save: save, saveQuiet: saveQuiet, el: el, modal: modal, uid: uid,
-      decodeToCanvas: decodeToCanvas, rotateCanvas: rotateCanvas, allPeople: allPeople, myPerson: myPerson, nextColor: nextColor, PALETTE: PALETTE, autoFitWindow: autoFitWindow, freeForDay: freeForDay, allWindows: allWindows, openAdd: openAdd, readImage: readImage, mergeRows: mergeRows, active: active, visibleDays: visibleDays };
+      decodeToCanvas: decodeToCanvas, rotateCanvas: rotateCanvas, allPeople: allPeople, visible: visible, myPerson: myPerson, nextColor: nextColor, PALETTE: PALETTE, autoFitWindow: autoFitWindow, freeForDay: freeForDay, allWindows: allWindows, openAdd: openAdd, readImage: readImage, mergeRows: mergeRows, active: active, visibleDays: visibleDays };
   }
 
   function boot() {
@@ -2696,6 +2717,14 @@ window.OVERLAP_CONFIG = {
     try {
       var r = await sb.from('schedules').select('user_id, meets, profiles!inner(display_name, colour)');
       if (r.error) throw r.error;
+
+      // a person can be in more than one of your groups, so keep every id
+      var gm = await sb.from('group_members').select('group_id, user_id');
+      var byUser = {};
+      (gm.data || []).forEach(function (row) {
+        (byUser[row.user_id] = byUser[row.user_id] || []).push(row.group_id);
+      });
+
       var mineId = me.id;
       O.S.cloud = (r.data || [])
         .filter(function (row) { return row.user_id !== mineId && row.meets && row.meets.length; })
@@ -2704,7 +2733,7 @@ window.OVERLAP_CONFIG = {
             id: 'c_' + row.user_id, cloud: true,
             name: row.profiles.display_name || 'Someone',
             color: row.profiles.colour || O.PALETTE[1],
-            meets: row.meets, thumbs: []
+            meets: row.meets, thumbs: [], groups: byUser[row.user_id] || []
           };
         });
       try { localStorage.setItem(CACHE, JSON.stringify(O.S.cloud)); } catch (e) { }
@@ -2740,6 +2769,29 @@ window.OVERLAP_CONFIG = {
         'You are not in a group yet. Make one and text the code to your friends, or join theirs.'));
       return;
     }
+
+    // the week merged every group together; scope it to one at a time
+    if (groups.some(function (g) { return g.id === O.S.groupView; }) === false &&
+        O.S.groupView !== 'all' && O.S.groupView !== 'local') {
+      O.S.groupView = 'all';                       // a group you left
+    }
+    var chips = el('div', 'gfilter');
+    function chip(key, label, title) {
+      var b = el('button', O.S.groupView === key ? 'on' : '', label);
+      b.title = title;
+      b.onclick = function () {
+        O.S.groupView = key;
+        O.save();
+        O.renderAll();
+        renderGroups();
+      };
+      chips.appendChild(b);
+    }
+    chip('all', 'Everyone', 'Everyone you have added and every group you are in');
+    groups.forEach(function (g) { chip(g.id, g.name, 'Only ' + g.name + ', plus the people you added yourself'); });
+    chip('local', 'Just mine', 'Only the people you added yourself, no groups');
+    host.appendChild(chips);
+
     groups.forEach(function (g) {
       var row = el('div', 'grow');
       row.appendChild(el('span', 'gn', g.name));
