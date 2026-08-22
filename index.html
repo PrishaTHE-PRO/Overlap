@@ -2873,11 +2873,34 @@ window.OVERLAP_CONFIG = {
         else ok();
       };
       row.appendChild(copy);
-      var out = el('button', 'ga', 'Leave');
+      /* Dropping your membership of a group you own leaves you its owner, so
+         it came straight back on the next read and the button looked dead. */
+      var owned = g.owner === me.id;
+      var out = el('button', 'ga', owned ? 'Delete' : 'Leave');
+      out.title = owned ? 'Delete this group for everyone in it' : 'Leave this group';
       out.onclick = async function () {
-        if (!confirm('Leave ' + g.name + '? You will stop seeing each other’s schedules.')) return;
-        await sb.from('group_members').delete().eq('group_id', g.id).eq('user_id', me.id);
+        if (!confirm(owned
+          ? 'Delete ' + g.name + '? It goes for everyone in it and the join code stops working.'
+          : 'Leave ' + g.name + '? You will stop seeing each other’s schedules.')) return;
+
+        out.disabled = true;
+        await sb.from('group_guests').delete().eq('added_by', me.id).eq('group_id', g.id);
+        var r = owned
+          ? await sb.from('groups').delete().eq('id', g.id)
+          : await sb.from('group_members').delete().eq('group_id', g.id).eq('user_id', me.id);
+        out.disabled = false;
+
+        if (r.error) {
+          warn('could not ' + (owned ? 'delete ' : 'leave ') + g.name, r.error);
+          return;
+        }
         await loadGroups();
+        // a delete no policy allows removes nothing and reports no error either
+        if (groups.some(function (x) { return x.id === g.id; })) {
+          warn('nothing was allowed to ' + (owned ? 'delete that group' : 'remove you from that group') +
+               '; the delete policies in group-leave.sql are missing', null);
+          return;
+        }
         await pull();
       };
       row.appendChild(out);
