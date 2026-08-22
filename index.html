@@ -164,6 +164,17 @@ button{cursor:pointer; border-radius:2px}
 }
 .gfilter button:hover{color:var(--ink)}
 .gfilter button.on{background:var(--ink); color:var(--surface); border-color:var(--ink)}
+.alertbar{
+  display:flex; gap:10px; align-items:baseline; padding:9px 22px; font-size:13px;
+  color:var(--accent-ink); background:color-mix(in oklab, var(--accent) 9%, var(--surface));
+  border-bottom:1px solid color-mix(in oklab, var(--accent) 28%, transparent);
+}
+.alertbar b{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:11px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; flex:none}
+.alertbar span{min-width:0}
+.alertbar code{font-family:"IBM Plex Mono",monospace; font-size:11.5px; opacity:.85}
+.alertbar .x{margin-left:auto; flex:none; border:0; background:transparent; cursor:pointer;
+  color:var(--accent-ink); font-size:15px; line-height:1; padding:0 2px}
 .prow .tick{
   width:15px; height:15px; flex:none; border:1px solid var(--line2); background:transparent;
   display:grid; place-items:center; font-size:10px; color:var(--surface); border-radius:1px; padding:0;
@@ -446,6 +457,8 @@ textarea.io{width:100%; min-height:140px; background:transparent; border:1px sol
     <button class="btn solid" id="btnAdd">Add<span class="hide-sm">schedule</span></button>
   </div>
 </div>
+
+<div class="alertbar" id="alertbar" hidden></div>
 
 <div class="frame">
   <aside class="rail rail-l">
@@ -2581,12 +2594,27 @@ window.OVERLAP_CONFIG = {
   function el() { return O.el.apply(null, arguments); }
   function $(id) { return document.getElementById(id); }
 
-  var lastWarning = null;
   function warn(what, e) {
-    lastWarning = what;
     try { console.warn('[overlap] ' + what, e); } catch (err) { }
-    var sub = $('subline');
-    if (sub) sub.textContent = what + '. Your schedules are still saved in this browser.';
+    var bar = $('alertbar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    bar.appendChild(el('b', '', 'Sync'));
+    var msg = el('span', '', what + '.');
+    if (e && e.message) {
+      msg.appendChild(document.createTextNode(' '));
+      msg.appendChild(el('code', '', e.message));
+    }
+    bar.appendChild(msg);
+    var x = el('button', 'x', '\u00D7');
+    x.title = 'Dismiss';
+    x.onclick = function () { bar.hidden = true; };
+    bar.appendChild(x);
+    bar.hidden = false;
+  }
+  function clearWarning() {
+    var bar = $('alertbar');
+    if (bar) bar.hidden = true;
   }
 
   /* ---------- boot ---------- */
@@ -2900,15 +2928,21 @@ window.OVERLAP_CONFIG = {
 
         if (r.error) {
           warn('could not ' + (owned ? 'delete ' : 'leave ') + g.name, r.error);
+          alert('That did not work.\n\n' + r.error.message);
           return;
         }
         await loadGroups();
         // a delete no policy allows removes nothing and reports no error either
         if (groups.some(function (x) { return x.id === g.id; })) {
-          warn('nothing was allowed to ' + (owned ? 'delete that group' : 'remove you from that group') +
-               '; the delete policies in group-leave.sql are missing', null);
+          var m2 = (owned ? 'Nothing was allowed to delete that group.' : 'Nothing was allowed to remove you from that group.') +
+            '\n\nThe database has no delete policy for it yet. Run supabase/group-leave.sql ' +
+            'in the Supabase SQL editor, then try again.';
+          warn(owned ? 'the group was not deleted, run supabase/group-leave.sql'
+                     : 'you were not removed from the group, run supabase/group-leave.sql', null);
+          alert(m2);
           return;
         }
+        clearWarning();
         await pull();
       };
       row.appendChild(out);
