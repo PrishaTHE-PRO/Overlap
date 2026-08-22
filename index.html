@@ -2585,10 +2585,11 @@ window.OVERLAP_CONFIG = {
   function tabIcon(id) {
     var w = el('span', 'ic'), i;
     if (id === 'week') {
-      w.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:3px;width:17px;height:17px';
+      w.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:3px;width:17px;place-items:stretch';
       for (i = 0; i < 4; i++) {
         var q = el('i');
-        q.style.cssText = 'background:currentColor;border-radius:1.5px;opacity:' + (i === 0 || i === 3 ? 1 : .5);
+        q.style.cssText = 'display:block;height:7px;background:currentColor;border-radius:1.5px;opacity:' +
+          (i === 0 || i === 3 ? 1 : .5);
         w.appendChild(q);
       }
     } else if (id === 'add') {
