@@ -486,16 +486,10 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 .ld-big.w{width:100%; justify-content:center; height:50px; font-size:15.5px; margin-top:16px}
 .ld-big .g{width:22px; height:22px; border-radius:99px; background:#fff; color:var(--accent);
   display:grid; place-items:center; font-size:12px; font-weight:700; flex:none}
-.ld-alt{border:1px solid var(--line2); background:var(--surface); color:var(--ink);
-  border-radius:13px; padding:0 22px; height:58px; font-size:16px; font-weight:450}
-.ld-alt:hover{border-color:var(--dim)}
 .ld-re{display:flex; align-items:center; gap:9px; margin-top:14px; font-size:13.5px; color:var(--faint)}
 .ld-re .tick{width:16px; height:16px; border-radius:5px; display:grid; place-items:center; font-size:10px;
   color:var(--good); background:color-mix(in oklab, var(--good) 10%, var(--surface));
   border:1px solid color-mix(in oklab, var(--good) 30%, transparent)}
-.ld-proof{display:flex; gap:36px; margin-top:44px; padding-top:26px; border-top:1px solid var(--rule); flex-wrap:wrap}
-.ld-proof b{display:block; font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:500; letter-spacing:-.02em}
-.ld-proof span{display:block; font-size:13px; color:var(--faint); margin-top:3px}
 
 .ld-card{border:1px solid var(--line); border-radius:20px; background:var(--surface); overflow:hidden;
   box-shadow:0 24px 60px -30px rgba(0,0,0,.3)}
@@ -565,8 +559,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
   .ld-foot .ld-for{display:none}
   .ld-hero{padding-top:34px}
   #how, #privacy{padding-top:56px}
-  .ld-big, .ld-alt{width:100%; justify-content:center}
-  .ld-proof{gap:22px}
+  .ld-big{width:100%; justify-content:center}
 }
 
 /* the inspector side reads as prose, not as a dense stack of labels */
@@ -888,18 +881,12 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
   <div class="ld-wrap ld-hero">
     <div class="ld-copy">
       <h1>The hour you’re all free, without the group chat.</h1>
-      <p>Send a screenshot of everyone’s schedule. Overlap reads the courses, lines up the week,
-         and shows the gaps you actually share — lunch on Monday, three hours on Friday.</p>
+      <p>Send a screenshot of everyone’s schedule. Overlap reads the courses off the image
+         and shows the hours you are all free.</p>
       <div class="ld-cta">
         <button class="ld-big" data-signin><span class="g">G</span>Sign in with your wisc.edu email</button>
-        <button class="ld-alt" data-add>Add a schedule</button>
       </div>
       <div class="ld-re"><span class="tick">✓</span>Free. Your schedule stays private until you share it.</div>
-      <div class="ld-proof">
-        <div><b>fast</b><span>to read a screenshot</span></div>
-        <div><b>6 – 9</b><span>shared windows in a typical week</span></div>
-        <div><b>0</b><span>accounts your friends need</span></div>
-      </div>
     </div>
 
     <div class="ld-card">
@@ -2586,15 +2573,8 @@ window.OVERLAP_CONFIG = {
     var host = document.getElementById('landing');
     if (!host) return;
     host.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-signin],[data-add]');
-      if (!b) return;
-      if (b.hasAttribute('data-add')) {          // you can use it without an account
-        entered = true;
-        updateLanding();
-        openAdd();
-      } else {
-        openAccount();
-      }
+      if (!e.target.closest('[data-signin]')) return;
+      openAccount();
     });
   }
 
@@ -2602,9 +2582,10 @@ window.OVERLAP_CONFIG = {
   function openAccount() {
     var btn = document.getElementById('btnAccount');
     if (btn && !btn.hidden) { btn.click(); return; }
-    entered = true;                              // no sign-in available, go on in
+    alert('Sign in is not reachable right now, so this is going on without it. ' +
+      'Anything you add stays in this browser until you can sign in.');
+    entered = true;                              // never leave someone at a dead end
     updateLanding();
-    openAdd();
   }
 
   /* ---------- sidebar nav ---------- */
