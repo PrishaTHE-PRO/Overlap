@@ -92,6 +92,14 @@ create policy "owner deletes group" on public.groups
   for delete to authenticated
   using (owner = auth.uid());
 
+-- The owner may rename their group. with check repeats the test so the owner
+-- column cannot be handed to somebody else in the same update.
+drop policy if exists "owner renames group" on public.groups;
+create policy "owner renames group" on public.groups
+  for update to authenticated
+  using      (owner = auth.uid())
+  with check (owner = auth.uid());
+
 -- The owner of a group, and only the owner, may turn someone out of it. The
 -- check reads groups.owner rather than group_members, so it does not recurse.
 

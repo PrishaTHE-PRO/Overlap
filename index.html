@@ -825,6 +825,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 @media (max-width:640px){
   .legend{display:none}
   .mhead{display:none}          /* the phone week carries its own heading */
+  body.has-tabs #btnAdd{display:none}   /* the tab bar carries Add */
   .nav{display:none}            /* the tab bar is the phone's navigation */
   .calhead div{font-size:10px; letter-spacing:.07em; padding:7px 0 6px}
   .gutter span{font-size:9px; right:5px; padding-top:1px}
@@ -860,7 +861,6 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
       <button data-t="dark" title="Dark">Dark</button>
     </div>
     <button class="btn" id="btnAccount" hidden>Sign in</button>
-    <button class="btn" id="btnData">Backup</button>
     <button class="btn solid" id="btnAdd">Add<span class="hide-sm">schedule</span></button>
   </div>
 </div>
@@ -2709,6 +2709,11 @@ window.OVERLAP_CONFIG = {
       c.appendChild(mem);
 
       var acts = el('div', 'acts');
+      if (g.owned) {
+        var rn = el('button', '', 'Rename');
+        rn.onclick = function () { if (C.renameGroup) C.renameGroup(g.raw); };
+        acts.appendChild(rn);
+      }
       var cp = el('button', '', 'Copy code');
       cp.onclick = function () { if (C.copyCode) C.copyCode(g.code, cp); };
       acts.appendChild(cp);
@@ -3683,77 +3688,6 @@ window.OVERLAP_CONFIG = {
   }
 
   /* ================= backup ================= */
-  function openData() {
-    var m = modal('Backup & restore', { width: 620 });
-    var payload = JSON.stringify({ v: 1, people: S.people.map(function (p) {
-      return { name: p.name, color: p.color, me: p.me, meets: p.meets };
-    }) }, null, 1);
-
-    m.body.appendChild(el('p', 'lede', 'Everything lives in this browser only. Copy this code to move your group to another device, or to send a friend their own copy.'));
-    var ta = el('textarea', 'io'); ta.value = payload; ta.readOnly = true;
-    m.body.appendChild(ta);
-
-    var btns = el('div'); btns.style.cssText = 'display:flex;gap:8px;margin-top:10px;flex-wrap:wrap';
-    var copy = el('button', 'btn sm', 'Copy code');
-    copy.onclick = function () {
-      ta.select();
-      (navigator.clipboard ? navigator.clipboard.writeText(payload) : Promise.reject())
-        .then(function () { copy.textContent = 'Copied'; }, function () { document.execCommand('copy'); copy.textContent = 'Copied'; });
-    };
-    btns.appendChild(copy);
-    var dl = el('button', 'btn sm', 'Save as file');
-    dl.style.display = 'none';
-    dl.onclick = async function () {
-      try {
-        var d = await window.claude.use('downloads');
-        await d.save({ filename: 'overlap-schedules.json', data: payload });
-        dl.textContent = 'Saved';
-      } catch (e) { dl.textContent = 'Not saved'; }
-    };
-    btns.appendChild(dl);
-    if (window.claude && window.claude.use) {
-      window.claude.use('downloads').then(function (d) { if (d) dl.style.display = ''; }, function () { });
-    }
-    m.body.appendChild(btns);
-
-    m.body.appendChild(el('div', 'label', 'Restore from a code')).style.cssText = 'margin:22px 0 9px';
-    var inTa = el('textarea', 'io'); inTa.placeholder = 'Paste a code here…'; inTa.style.minHeight = '90px';
-    m.body.appendChild(inTa);
-    var msg = el('div', 'err'); msg.style.display = 'none';
-    m.body.appendChild(msg);
-    var imp = el('button', 'btn sm', 'Add these people');
-    imp.style.marginTop = '8px';
-    imp.onclick = function () {
-      try {
-        var d = JSON.parse(inTa.value);
-        if (!d || !Array.isArray(d.people)) throw new Error('bad');
-        d.people.forEach(function (p) {
-          if (!p.meets || !p.meets.length) return;
-          S.people.push({
-            id: uid(), name: p.name || 'Untitled',
-            color: p.color || nextColor(),
-            me: false, thumbs: [], meets: p.meets
-          });
-        });
-        autoFitWindow(); save(); m.close(); renderAll();
-      } catch (e) {
-        msg.textContent = 'That does not look like an Overlap code. Paste the whole thing, including the braces.';
-        msg.style.display = '';
-      }
-    };
-    m.body.appendChild(imp);
-
-    var wipe = el('button', 'btn danger', 'Delete everything');
-    wipe.onclick = function () {
-      if (!confirm('Delete every schedule stored in this browser?')) return;
-      S.people = []; S.off = {}; save(); m.close(); renderAll();
-    };
-    m.foot.appendChild(wipe);
-    m.foot.appendChild(el('span', 'spacer'));
-    var done = el('button', 'btn', 'Done'); done.onclick = function () { m.close(); };
-    m.foot.appendChild(done);
-  }
-
   /* ================= wiring ================= */
   function syncSelects() {
     var a = document.getElementById('selStart'), b = document.getElementById('selEnd');
@@ -3796,7 +3730,6 @@ window.OVERLAP_CONFIG = {
     syncSelects();
 
     document.getElementById('btnAdd').onclick = openAdd;
-    document.getElementById('btnData').onclick = openData;
     document.getElementById('btnAll').onclick = function () {
       var roster = visible();
       var anyOff = roster.some(function (p) { return S.off[p.id]; });
@@ -4300,6 +4233,52 @@ window.OVERLAP_CONFIG = {
     O.renderAll();
   }
 
+  /* Only the owner, same as removing someone. The policy checks groups.owner,
+     so a member reaching this call is refused by the database. */
+  function renameGroup(g) {
+    if (!me || g.owner !== me.id) return;
+    var m = O.modal('Rename group', { width: 460 });
+    var f = el('div', 'field');
+    f.appendChild(el('label', '', 'Group name'));
+    var input = el('input'); input.type = 'text'; input.value = g.name || '';
+    f.appendChild(input);
+    m.body.appendChild(f);
+    m.body.appendChild(el('p', 'lede',
+      'Everyone in the group sees the new name. The join code stays as it is.'));
+    var err = el('div', 'err'); err.hidden = true;
+    m.body.appendChild(err);
+
+    m.foot.appendChild(el('span', 'spacer'));
+    var cancel = el('button', 'btn quiet', 'Cancel');
+    cancel.onclick = function () { m.close(); };
+    m.foot.appendChild(cancel);
+
+    var go = el('button', 'btn solid', 'Save');
+    go.onclick = async function () {
+      var v = (input.value || '').trim();
+      if (!v) { input.focus(); return; }
+      if (v === g.name) { m.close(); return; }
+      go.disabled = true; err.hidden = true;
+      var r = await sb.from('groups').update({ name: v }).eq('id', g.id);
+      go.disabled = false;
+      if (r.error) { err.textContent = r.error.message; err.hidden = false; return; }
+
+      await loadGroups();
+      // an update no policy allows changes nothing and reports no error either
+      if (!groups.some(function (x) { return x.id === g.id && x.name === v; })) {
+        err.textContent = 'Nothing was allowed to change the name. Run supabase/setup.sql ' +
+          'in the Supabase SQL editor, then try again.';
+        err.hidden = false;
+        return;
+      }
+      clearWarning();
+      m.close();
+      O.renderAll();
+    };
+    m.foot.appendChild(go);
+    setTimeout(function () { input.focus(); input.select(); }, 30);
+  }
+
   function copyCode(code, btn) {
     var ok = function () {
       var was = btn.textContent;
@@ -4440,7 +4419,7 @@ window.OVERLAP_CONFIG = {
 
   window.__CLOUD__ = { init: init, onLocalChange: onLocalChange, pull: pull,
     groupList: groupList, groupCards: groupCards,
-    promptGroup: promptGroup, leaveGroup: leaveGroup, copyCode: copyCode,
+    promptGroup: promptGroup, leaveGroup: leaveGroup, copyCode: copyCode, renameGroup: renameGroup,
     removeMember: removeMember,
     signedIn: function () { return !!me; } };
 })();
