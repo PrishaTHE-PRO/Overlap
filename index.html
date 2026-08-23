@@ -719,6 +719,15 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 .mw-chips button.all{background:var(--ink); color:var(--surface); border-color:var(--ink)}
 .mw-chips i{width:7px; height:7px; border-radius:99px; background:var(--pc); flex:none}
 .mw-hint{font-size:12px; line-height:1.45; color:var(--faint); margin:0 3px 14px}
+.mw-gchips{padding-top:0; margin-top:-4px}
+.mw-gchips button{
+  min-height:30px; padding:5px 12px; font-size:12.5px; font-weight:500;
+  background:transparent; color:var(--dim); border-color:var(--line);
+}
+.mw-gchips button.sel{
+  background:color-mix(in oklab, var(--accent) 10%, var(--surface));
+  border-color:color-mix(in oklab, var(--accent) 45%, transparent); color:var(--accent-ink);
+}
 .mw-best{
   display:block; width:100%; text-align:left; border:1px solid color-mix(in oklab, var(--accent) 26%, transparent);
   background:color-mix(in oklab, var(--accent) 7%, var(--surface)); border-radius:18px; padding:16px 17px;
@@ -2234,7 +2243,7 @@ window.OVERLAP_CONFIG = {
     everyone.appendChild(document.createTextNode('Everyone'));
     everyone.onclick = function () { S.off = {}; save(); renderAll(); };
     chips.appendChild(everyone);
-    allPeople().forEach(function (p) {
+    visible().forEach(function (p) {
       var on = !S.off[p.id];
       var b = el('button', on ? '' : 'off');
       b.style.setProperty('--pc', p.color);
@@ -2247,8 +2256,30 @@ window.OVERLAP_CONFIG = {
       chips.appendChild(b);
     });
     host.appendChild(chips);
-    host.appendChild(el('div', 'mw-hint',
-      'Tap a name to leave them out of the shared time, and again to bring them back.'));
+
+    /* Which group's week this is. Kept apart from the names above: that row
+       decides who counts, this one decides who is on offer. */
+    var myGroups = (window.__CLOUD__ && window.__CLOUD__.groupList) ? window.__CLOUD__.groupList() : [];
+    if (myGroups.length) {
+      if (S.groupView !== 'all' && S.groupView !== 'local' &&
+          !myGroups.some(function (g) { return g.id === S.groupView; })) {
+        S.groupView = 'all';                       // a group you have left
+      }
+      var grow = el('div', 'mw-chips mw-gchips');
+      var gchip = function (key, label) {
+        var b = el('button', S.groupView === key ? 'sel' : '', label);
+        b.onclick = function () { S.groupView = key; save(); renderAll(); };
+        grow.appendChild(b);
+      };
+      gchip('all', 'All groups');
+      myGroups.forEach(function (g) { gchip(g.id, g.name); });
+      gchip('local', 'Just mine');
+      host.appendChild(grow);
+    }
+
+    host.appendChild(el('div', 'mw-hint', myGroups.length
+      ? 'Pick a group to see only its people, then tap a name to leave someone out.'
+      : 'Tap a name to leave them out of the shared time, and again to bring them back.'));
 
     var wins = allWindows(ppl, days);
 
@@ -2463,7 +2494,7 @@ window.OVERLAP_CONFIG = {
         f.appendChild(el('b', '', dur(win.len)));
         if (h >= 44) f.appendChild(el('s', '', ppl.length === 1 ? 'you are free' : 'all ' + ppl.length + ' free'));
         if (h >= 70) f.appendChild(el('u', '', hhmm(w[0]) + ' \u2013 ' + hhmm(w[1])));
-        f.onclick = function () { S.sel = win; renderAll(); };
+        f.onclick = function () { S.sel = sameWin(S.sel, win) ? null : win; renderAll(); };
         col.appendChild(f);
       });
       body.appendChild(col);
@@ -2826,7 +2857,7 @@ window.OVERLAP_CONFIG = {
     }
 
     var stack = el('div', 'pstack');
-    (ppl.length ? ppl : allPeople()).forEach(function (p) {
+    visible().forEach(function (p) {
       var block = el('div', 'pblock');
       var hd = el('header');
       var sq = el('span', 'swatch-sq'); sq.style.setProperty('--pc', p.color);
@@ -2948,7 +2979,7 @@ window.OVERLAP_CONFIG = {
       wins.slice(0, 16).forEach(function (w) {
         var it = el('div', 'frow' + (sameWin(S.sel, w) ? ' pick' : ''));
         it.style.cursor = 'pointer';
-        it.onclick = function () { S.sel = w; renderAll(); };
+        it.onclick = function () { S.sel = sameWin(S.sel, w) ? null : w; renderAll(); };
         it.appendChild(el('div', 'd', DAY_SHORT[w.day]));
         var t = el('div', 't');
         t.appendChild(el('div', 'r', hhmm(w.start) + ' \u2013 ' + hhmm(w.end)));
@@ -4079,9 +4110,6 @@ window.OVERLAP_CONFIG = {
     if (!me || pulling) return;
     pulling = true;
     try {
-      var r = await sb.from('schedules').select('user_id, meets, profiles!inner(display_name, colour)');
-      if (r.error) throw r.error;
-
       // a person can be in more than one of your groups, so keep every id
       var gm = await sb.from('group_members').select('group_id, user_id');
       var byUser = {};
@@ -4090,6 +4118,15 @@ window.OVERLAP_CONFIG = {
       });
 
       var mineId = me.id;
+      var mates = Object.keys(byUser).filter(function (id) { return id !== mineId; });
+
+      var r = { data: [] };
+      if (mates.length) {
+        r = await sb.from('schedules')
+          .select('user_id, meets, profiles!inner(display_name, colour)')
+          .in('user_id', mates);
+        if (r.error) throw r.error;
+      }
       O.S.cloud = (r.data || [])
         .filter(function (row) { return row.user_id !== mineId && row.meets && row.meets.length; })
         .map(function (row) {
