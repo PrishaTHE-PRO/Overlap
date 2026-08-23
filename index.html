@@ -1630,6 +1630,14 @@ window.OVERLAP_CONFIG = {
     return n;
   }
   function uid() { return 'p' + Math.random().toString(36).slice(2, 9); }
+
+  /* Colours reach us from other people: a groupmate's profile, or a guest one
+     of them added. They end up in inline styles, so anything that is not
+     plainly a hex colour is dropped rather than trusted. */
+  var HEXCOLOR = /^#[0-9a-fA-F]{3,8}$/;
+  function safeColor(c, fallback) {
+    return (typeof c === 'string' && HEXCOLOR.test(c.trim())) ? c.trim() : (fallback || PALETTE[0]);
+  }
   function nextColor() {
     var used = {}; allPeople().forEach(function (p) { used[p.color] = 1; });
     for (var i = 0; i < PALETTE.length; i++) if (!used[PALETTE[i]]) return PALETTE[i];
@@ -1919,10 +1927,10 @@ window.OVERLAP_CONFIG = {
         var hgt = (it.e - it.s) * ppm;
         var withN = shared[m.code + '|' + m.day + '|' + m.start];
         var b = el('div', 'busy' + (withN ? ' together' : ''));
-        b.style.cssText = '--pc:' + p.color +
-          ';top:' + top + 'px;height:' + Math.max(hgt, 6) + 'px' +
+        b.style.cssText = 'top:' + top + 'px;height:' + Math.max(hgt, 6) + 'px' +
           ';left:' + (it.col * 100 / lay.cols) + '%' +
           ';width:calc(' + (it.span * 100 / lay.cols) + '% - 2px)';
+        b.style.setProperty('--pc', safeColor(p.color));
         b.title = p.name + ' · ' + m.code + (m.sect ? ' ' + m.sect : '') + ' · ' +
           hhmm(m.start) + '–' + hhmm(m.end) +
           (withN ? '  (here with ' + (withN - 1) + ' other' + (withN > 2 ? 's' : '') + ')' : '');
@@ -3761,6 +3769,7 @@ window.OVERLAP_CONFIG = {
 
     renderAll();
     window.__OVERLAP__ = { S: S, renderAll: renderAll, save: save, saveQuiet: saveQuiet, el: el, modal: modal, uid: uid,
+      safeColor: safeColor,
       decodeToCanvas: decodeToCanvas, rotateCanvas: rotateCanvas, allPeople: allPeople, visible: visible, myPerson: myPerson, nextColor: nextColor, PALETTE: PALETTE, autoFitWindow: autoFitWindow, freeForDay: freeForDay, allWindows: allWindows, openAdd: openAdd, readImage: readImage, mergeRows: mergeRows, active: active, visibleDays: visibleDays };
   }
 
@@ -3915,6 +3924,7 @@ window.OVERLAP_CONFIG = {
     var localAt = O.S.updatedAt || 0;
 
     if (remote && remote.length && remoteAt > localAt) {
+      remote.forEach(function (p) { p.color = O.safeColor(p.color); });
       O.S.people = remote;                 // another device edited this account later
       O.S.updatedAt = remoteAt;
       O.saveQuiet();
@@ -3950,7 +3960,7 @@ window.OVERLAP_CONFIG = {
       if (!mine) {
         O.S.people.unshift({
           id: O.uid(), name: (profile && profile.display_name) || shortName(),
-          color: (profile && profile.colour) || O.PALETTE[0],
+          color: O.safeColor(profile && profile.colour, O.PALETTE[0]),
           me: true, thumbs: [], meets: remote
         });
       } else {
@@ -4046,7 +4056,7 @@ window.OVERLAP_CONFIG = {
           return {
             id: 'c_' + row.user_id, cloud: true,
             name: row.profiles.display_name || 'Someone',
-            color: row.profiles.colour || O.PALETTE[1],
+            color: O.safeColor(row.profiles.colour, O.PALETTE[1]),
             meets: row.meets, thumbs: [], groups: byUser[row.user_id] || []
           };
         });
@@ -4058,7 +4068,7 @@ window.OVERLAP_CONFIG = {
         var g = row.person || {};
         O.S.cloud.push({
           id: 'g_' + row.group_id + '_' + (g.id || ''), cloud: true, guest: true,
-          name: g.name || 'Someone', color: g.color || O.PALETTE[2],
+          name: g.name || 'Someone', color: O.safeColor(g.color, O.PALETTE[2]),
           meets: g.meets || [], thumbs: [], groups: [row.group_id]
         });
       });
