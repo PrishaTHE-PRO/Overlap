@@ -69,20 +69,24 @@ button{cursor:pointer; border-radius:2px}
 
 /* ============ top bar ============ */
 .bar{
-  position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:16px;
+  position:sticky; top:0; z-index:40; display:grid; align-items:center; gap:16px;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
   padding:0 18px; height:54px; background:var(--surface); border-bottom:1px solid var(--line);
 }
+.bar-l{display:flex; align-items:center; gap:16px; min-width:0}
 .wordmark{
   font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
   font-weight:700; font-size:19px; letter-spacing:.005em; white-space:nowrap;
 }
 .wordmark span{color:var(--accent)}
 .tagline{
-  font-size:12px; color:var(--faint); margin-right:auto; min-width:0;
+  font-size:12px; color:var(--faint); min-width:0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   border-left:1px solid var(--line); padding-left:16px; height:22px; line-height:22px;
 }
-.bar-actions{display:flex; align-items:center; gap:10px; flex:none}
+.bar-actions{display:flex; align-items:center; justify-content:flex-end; gap:10px; min-width:0}
+.btn.icon{padding:6px 8px; line-height:0; justify-content:center}
+.btn.icon svg{display:block}
 
 .btn{
   border:1px solid var(--line2); background:transparent; border-radius:2px;
@@ -852,14 +856,16 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 </style>
 
 <div class="bar">
-  <div class="wordmark">Over<span>lap</span></div>
-  <div class="tagline" id="subline">shared free time, read straight off the screenshots</div>
+  <div class="bar-l">
+    <div class="wordmark">Over<span>lap</span></div>
+    <div class="tagline" id="subline">shared free time, read straight off the screenshots</div>
+  </div>
+  <div class="theme" id="theme">
+    <button data-t="light" title="Light">Light</button>
+    <button data-t="auto" title="Match your system" class="on">Auto</button>
+    <button data-t="dark" title="Dark">Dark</button>
+  </div>
   <div class="bar-actions">
-    <div class="theme" id="theme">
-      <button data-t="light" title="Light">Light</button>
-      <button data-t="auto" title="Match your system" class="on">Auto</button>
-      <button data-t="dark" title="Dark">Dark</button>
-    </div>
     <button class="btn" id="btnAccount" hidden>Sign in</button>
     <button class="btn solid" id="btnAdd">Add<span class="hide-sm">schedule</span></button>
   </div>
@@ -3864,12 +3870,12 @@ window.OVERLAP_CONFIG = {
       profile = null; groups = [];
       O.S.cloud = [];
       try { localStorage.removeItem(CACHE); } catch (e) { }
-      btn.textContent = 'Sign in';
+      setAccountUI();
       $('groupPanel').hidden = true;
       O.renderAll();
       return;
     }
-    btn.textContent = shortName();
+    setAccountUI();
     $('groupPanel').hidden = false;
     await loadProfile();
     await loadGroups();
@@ -3877,6 +3883,36 @@ window.OVERLAP_CONFIG = {
     await withdrawGuests();
     await syncMine();
     await pull();
+  }
+
+  var GEAR = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="3.1"></circle>' +
+    '<path d="M19.9 15.1a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 ' +
+    '1.7 1.7 0 0 0-1 1.5v.2a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 ' +
+    '0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 ' +
+    '1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 ' +
+    '0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1' +
+    'a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.2a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>';
+
+  /* Signed out this has to say what it is. Signed in, the name was only ever a
+     label on a button that opens account and settings, so an icon says it
+     without spending the width. One place decides, so the name cannot creep
+     back over the icon from any of the paths that used to set it. */
+  function setAccountUI() {
+    var b = $('btnAccount');
+    if (!b) return;
+    if (!me) {
+      b.className = 'btn';
+      b.textContent = 'Sign in';
+      b.title = 'Sign in';
+      b.removeAttribute('aria-label');
+      return;
+    }
+    b.className = 'btn icon';
+    b.innerHTML = GEAR;
+    b.title = shortName() + ' \u00B7 account and settings';
+    b.setAttribute('aria-label', 'Account and settings');
   }
 
   function shortName() {
@@ -3896,7 +3932,7 @@ window.OVERLAP_CONFIG = {
       }).select('id, display_name, colour').maybeSingle();
       profile = ins.data || null;
     }
-    $('btnAccount').textContent = shortName();
+    setAccountUI();
   }
 
   /* ---------- your whole roster, private to your account ----------
@@ -3976,7 +4012,7 @@ window.OVERLAP_CONFIG = {
     if (up.error) warn('could not share your schedule', up.error);
     await sb.from('profiles').update({ display_name: mine.name, colour: mine.color }).eq('id', me.id);
     if (profile) { profile.display_name = mine.name; profile.colour = mine.color; }
-    $('btnAccount').textContent = shortName();
+    setAccountUI();
   }
 
   function onLocalChange() {
@@ -4410,7 +4446,7 @@ window.OVERLAP_CONFIG = {
       if (mine) { mine.name = v; O.save(); }
       await sb.from('profiles').update({ display_name: v }).eq('id', me.id);
       if (profile) profile.display_name = v;
-      $('btnAccount').textContent = shortName();
+      setAccountUI();
       O.renderAll();
       status.textContent = 'Saved.'; status.hidden = false;
     };
