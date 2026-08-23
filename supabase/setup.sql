@@ -92,6 +92,26 @@ create policy "owner deletes group" on public.groups
   for delete to authenticated
   using (owner = auth.uid());
 
+-- The owner of a group, and only the owner, may turn someone out of it. The
+-- check reads groups.owner rather than group_members, so it does not recurse.
+
+drop policy if exists "owner removes members" on public.group_members;
+create policy "owner removes members" on public.group_members
+  for delete to authenticated
+  using (exists (
+    select 1 from public.groups g
+    where g.id = group_members.group_id and g.owner = auth.uid()
+  ));
+
+-- and may drop a guest somebody shared into their group
+drop policy if exists "owner removes guests" on public.group_guests;
+create policy "owner removes guests" on public.group_guests
+  for delete to authenticated
+  using (exists (
+    select 1 from public.groups g
+    where g.id = group_guests.group_id and g.owner = auth.uid()
+  ));
+
 -- deleting a group should take its memberships with it, whatever the existing
 -- constraint happens to be called
 do $$

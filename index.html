@@ -677,6 +677,12 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 .gcard .mem span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .gcard .mem em{font-style:normal; margin-left:auto; flex:none; font-size:10.5px; font-weight:600;
   letter-spacing:.06em; text-transform:uppercase; color:var(--faint)}
+.gcard .mem em + .rm{margin-left:10px}
+.gcard .mem .rm{
+  margin-left:auto; flex:none; border:1px solid var(--line); background:transparent; border-radius:8px;
+  padding:4px 9px; font-size:12px; font-weight:500; color:var(--dim);
+}
+.gcard .mem .rm:hover{border-color:color-mix(in oklab, var(--accent) 40%, transparent); color:var(--accent-ink)}
 .gcard .acts{display:flex; border-top:1px solid var(--rule); margin:15px -17px -16px}
 .gcard .acts button{flex:1; border:0; background:transparent; height:46px; font-size:13.5px;
   font-weight:500; color:var(--dim)}
@@ -822,6 +828,15 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
   .free .len{font-size:10.5px}
   .free .rng{font-size:9px}
   .free .plate{padding:1px 5px}
+  .pstack{gap:22px}
+  .pblock header{flex-wrap:wrap; row-gap:8px}
+  .pblock header h3{font-size:16px}
+  .pblock .stats{margin-left:0; order:3; width:100%; gap:18px; justify-content:flex-start}
+  .pblock .stats div{text-align:left}
+  .pblock header .btn{order:2; margin-left:auto}
+  .ptable{font-size:12.5px}
+  .ptable th:nth-child(2), .ptable td:nth-child(2){display:none}   /* section, least missed */
+  .ptable td{padding:7px 8px 7px 0}
   .day .rules i.half{display:none}          /* half hour rules are noise at this size */
   .stage{padding:12px 10px 30px}
 }
@@ -2594,7 +2609,7 @@ window.OVERLAP_CONFIG = {
 
     // making and joining belong on the page, not in a rail the phone never shows
     var bar = el('div', 'gv-bar');
-    var mk = el('button', 'btn solid', 'New group');
+    var mk = el('button', 'btn solid', 'Create new group');
     mk.onclick = function () { if (C.promptGroup) C.promptGroup('new'); };
     var jn = el('button', 'btn', 'Join with a code');
     jn.onclick = function () { if (C.promptGroup) C.promptGroup('join'); };
@@ -2628,6 +2643,12 @@ window.OVERLAP_CONFIG = {
         row.appendChild(el('span', '', p.name));
         if (p.you) row.appendChild(el('em', '', 'you'));
         else if (p.guest) row.appendChild(el('em', '', 'added by a friend'));
+        if (g.owned && !p.you) {
+          var rm = el('button', 'rm', 'Remove');
+          rm.title = 'Remove ' + p.name + ' from ' + g.name;
+          rm.onclick = function () { if (C.removeMember) C.removeMember(g.raw, p, rm); };
+          row.appendChild(rm);
+        }
         mem.appendChild(row);
       });
       c.appendChild(mem);
@@ -2648,7 +2669,8 @@ window.OVERLAP_CONFIG = {
 
   /* ---------- phone tab bar ---------- */
   var TABS = [
-    { id: 'week', label: 'Week' }, { id: 'add', label: 'Add' },
+    { id: 'week', label: 'Week' }, { id: 'people', label: 'People' },
+    { id: 'add', label: 'Add' },
     { id: 'groups', label: 'Groups' }, { id: 'together', label: 'Together' }
   ];
 
@@ -2666,6 +2688,10 @@ window.OVERLAP_CONFIG = {
       w.innerHTML = '<span style="position:relative;width:17px;height:17px;display:block">' +
         '<i style="position:absolute;left:0;right:0;top:7.5px;height:2px;background:currentColor;border-radius:2px"></i>' +
         '<i style="position:absolute;top:0;bottom:0;left:7.5px;width:2px;background:currentColor;border-radius:2px"></i></span>';
+    } else if (id === 'people') {
+      w.innerHTML = '<span style="position:relative;width:17px;height:17px;display:block">' +
+        '<i style="position:absolute;left:5.5px;top:1.5px;width:6px;height:6px;border-radius:99px;background:currentColor"></i>' +
+        '<i style="position:absolute;left:2px;top:9.5px;width:13px;height:6px;border-radius:6px 6px 3px 3px;background:currentColor"></i></span>';
     } else if (id === 'groups') {
       w.innerHTML = '<span style="display:flex;gap:3px">' +
         '<i style="width:5px;height:5px;border-radius:99px;background:currentColor"></i>' +
@@ -2696,7 +2722,7 @@ window.OVERLAP_CONFIG = {
       b.onclick = function () {
         if (t.id === 'add') { openAdd(); return; }   // a step, not a place
         S.mtab = t.id;
-        S.view = t.id === 'week' ? 'overlap' : t.id;
+        S.view = t.id === 'week' ? 'overlap' : t.id;   // 'people' matches the sidebar's By person
         renderAll();
         window.scrollTo(0, 0);
       };
@@ -3563,6 +3589,8 @@ window.OVERLAP_CONFIG = {
     if (draft.editing) {
       var del = el('button', 'btn danger', 'Remove person');
       del.onclick = function () {
+        if (!confirm('Remove ' + (draft.editing.name || 'this person') +
+          '? Their schedule goes from this browser.')) return;
         var gone = draft.editing;
         S.people = S.people.filter(function (p) { return p.id !== gone.id; });
         delete S.off[gone.id];
@@ -4024,7 +4052,10 @@ window.OVERLAP_CONFIG = {
       }];
       O.S.cloud.forEach(function (c) {
         if ((c.groups || []).indexOf(g.id) >= 0) {
-          mem.push({ name: c.name, color: c.color, guest: !!c.guest });
+          mem.push({
+            name: c.name, color: c.color, guest: !!c.guest,
+            uid: c.uid, addedBy: c.addedBy, personId: c.personId
+          });
         }
       });
       return {
@@ -4054,7 +4085,7 @@ window.OVERLAP_CONFIG = {
         .filter(function (row) { return row.user_id !== mineId && row.meets && row.meets.length; })
         .map(function (row) {
           return {
-            id: 'c_' + row.user_id, cloud: true,
+            id: 'c_' + row.user_id, cloud: true, uid: row.user_id,
             name: row.profiles.display_name || 'Someone',
             color: O.safeColor(row.profiles.colour, O.PALETTE[1]),
             meets: row.meets, thumbs: [], groups: byUser[row.user_id] || []
@@ -4068,6 +4099,7 @@ window.OVERLAP_CONFIG = {
         var g = row.person || {};
         O.S.cloud.push({
           id: 'g_' + row.group_id + '_' + (g.id || ''), cloud: true, guest: true,
+          addedBy: row.added_by, personId: g.id || '',
           name: g.name || 'Someone', color: O.safeColor(g.color, O.PALETTE[2]),
           meets: g.meets || [], thumbs: [], groups: [row.group_id]
         });
@@ -4191,6 +4223,46 @@ window.OVERLAP_CONFIG = {
     }
     clearWarning();
     await pull();
+    O.renderAll();
+  }
+
+  /* The owner of a group can turn someone out of it. Nobody else can: the
+     policy checks groups.owner, so a member pressing this would be refused
+     even if the button somehow appeared for them. */
+  async function removeMember(g, m, btn) {
+    if (!me || g.owner !== me.id) return;
+    if (!confirm('Remove ' + (m.name || 'this person') + ' from ' + g.name + '?' +
+      (m.guest ? ' Whoever added them keeps their copy.' : ' They stop seeing the group, and it stops showing you.'))) return;
+
+    if (btn) btn.disabled = true;
+    var r;
+    if (m.guest) {
+      r = await sb.from('group_guests').delete()
+        .eq('group_id', g.id).eq('added_by', m.addedBy).eq('person_id', m.personId);
+    } else {
+      await sb.from('group_guests').delete().eq('group_id', g.id).eq('added_by', m.uid);
+      r = await sb.from('group_members').delete().eq('group_id', g.id).eq('user_id', m.uid);
+    }
+    if (btn) btn.disabled = false;
+
+    if (r && r.error) {
+      warn('could not remove ' + m.name, r.error);
+      alert('That did not work.\n\n' + r.error.message);
+      return;
+    }
+    await pull();
+    // a delete no policy allows removes nothing and reports no error either
+    var still = O.S.cloud.some(function (c) {
+      return (c.groups || []).indexOf(g.id) >= 0 &&
+        (m.guest ? c.personId === m.personId && c.addedBy === m.addedBy : c.uid === m.uid);
+    });
+    if (still) {
+      warn('nobody was removed, run supabase/setup.sql again for the owner policies', null);
+      alert('Nothing was allowed to remove them.\n\nThe database has no policy letting a group owner ' +
+        'do that yet. Run supabase/setup.sql in the Supabase SQL editor, then try again.');
+      return;
+    }
+    clearWarning();
     O.renderAll();
   }
 
@@ -4335,6 +4407,7 @@ window.OVERLAP_CONFIG = {
   window.__CLOUD__ = { init: init, onLocalChange: onLocalChange, pull: pull,
     groupList: groupList, groupCards: groupCards, syncGuest: syncGuest,
     promptGroup: promptGroup, leaveGroup: leaveGroup, copyCode: copyCode,
+    removeMember: removeMember,
     signedIn: function () { return !!me; } };
 })();
 
