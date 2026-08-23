@@ -3439,7 +3439,9 @@ window.OVERLAP_CONFIG = {
     var drop = el('div', 'drop');
     drop.innerHTML = '<h4>Drop a screenshot of the week</h4><p>Click to choose a file, or paste one with \u2318V.</p>' +
       '<p class="tip">Use a screenshot rather than a photo of your screen. It reads much faster and gets more of your classes right.</p>' +
-      '<p class="or">Works on a week grid from Course Search &amp; Enroll, MyUW, Google Calendar, or anything else with coloured class blocks.</p>';
+      '<p class="or">Works on a week grid from Course Search &amp; Enroll, MyUW, Google Calendar, ' +
+      'or anything else with coloured class blocks. The start and end times have to be readable ' +
+      'inside the blocks, since that is where they are read from.</p>';
     var fileIn = el('input'); fileIn.type = 'file'; fileIn.accept = 'image/*,.heic,.heif'; fileIn.multiple = true; fileIn.style.display = 'none';
     drop.onclick = function () { fileIn.click(); };
     drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('hot'); };
