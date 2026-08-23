@@ -718,6 +718,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 .mw-chips button.off{color:var(--faint); border-color:var(--line); background:transparent}
 .mw-chips button.all{background:var(--ink); color:var(--surface); border-color:var(--ink)}
 .mw-chips i{width:7px; height:7px; border-radius:99px; background:var(--pc); flex:none}
+.mw-hint{font-size:12px; line-height:1.45; color:var(--faint); margin:0 3px 14px}
 .mw-best{
   display:block; width:100%; text-align:left; border:1px solid color-mix(in oklab, var(--accent) 26%, transparent);
   background:color-mix(in oklab, var(--accent) 7%, var(--surface)); border-radius:18px; padding:16px 17px;
@@ -1678,7 +1679,35 @@ window.OVERLAP_CONFIG = {
   function toInput(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
   function fromInput(v) { var p = (v || '').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
 
-  function allPeople() { return S.cloud.length ? S.people.concat(S.cloud) : S.people; }
+  /* Someone can arrive twice: once as the screenshot you took of their week,
+     and again as their own schedule when they join a group. Theirs wins, since
+     they keep it up to date, and yours is only hidden. If they leave the group
+     their copy goes and the one you added comes back on its own. */
+  function normName(n) {
+    return String(n || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+  function sameHuman(a, b) {
+    var x = normName(a), y = normName(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+    // a screenshot usually carries a first name, an account the full one
+    var xs = x.split(' '), ys = y.split(' ');
+    return (xs.length === 1 && ys[0] === x) || (ys.length === 1 && xs[0] === y);
+  }
+
+  function allPeople() {
+    if (!S.cloud.length) return S.people;
+    S.cloud.forEach(function (c) { c.mergedFrom = null; });
+    var mine = S.people.filter(function (p) {
+      if (p.me) return true;                       // never fold away your own
+      var twin = null;
+      S.cloud.forEach(function (c) { if (!twin && sameHuman(c.name, p.name)) twin = c; });
+      if (!twin) return true;
+      twin.mergedFrom = p.name;
+      return false;
+    });
+    return mine.concat(S.cloud);
+  }
   function myPerson() {
     for (var i = 0; i < S.people.length; i++) if (S.people[i].me) return S.people[i];
     return null;
@@ -2085,7 +2114,15 @@ window.OVERLAP_CONFIG = {
       row.appendChild(el('span', 'swatch-sq'));
       row.appendChild(el('span', 'nm', p.name));
       if (p.me) row.appendChild(el('span', 'youtag', 'YOU'));
-      if (p.cloud) row.appendChild(el('span', 'synctag', 'SYNCED'));
+      if (p.cloud) {
+        var st = el('span', 'synctag', 'SYNCED');
+        if (p.mergedFrom) {
+          st.textContent = 'MERGED';
+          st.title = 'Their own schedule, in place of the ' + p.mergedFrom +
+            ' you added. Yours comes back if they leave the group.';
+        }
+        row.appendChild(st);
+      }
       var ct = el('span', 'ct', String(groupMeets(p.meets).length));
       ct.title = groupMeets(p.meets).length + ' sections';
       row.appendChild(ct);
@@ -2211,6 +2248,8 @@ window.OVERLAP_CONFIG = {
       chips.appendChild(b);
     });
     host.appendChild(chips);
+    host.appendChild(el('div', 'mw-hint',
+      'Tap a name to leave them out of the shared time, and again to bring them back.'));
 
     var wins = allWindows(ppl, days);
 
@@ -3586,7 +3625,7 @@ window.OVERLAP_CONFIG = {
       m.body.appendChild(th);
     }
 
-    if (draft.editing) {
+    if (draft.editing && !draft.editing.me) {
       var del = el('button', 'btn danger', 'Remove person');
       del.onclick = function () {
         if (!confirm('Remove ' + (draft.editing.name || 'this person') +
