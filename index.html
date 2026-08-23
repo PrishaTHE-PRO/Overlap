@@ -667,6 +667,23 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 .gcard .code{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--faint);
   background:var(--sunk); border-radius:8px; padding:5px 9px; margin-left:auto}
 .gcard .m{font-size:13.5px; color:var(--dim); margin-top:7px}
+.gcard .tag{font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--faint); border:1px solid var(--line); border-radius:99px; padding:2px 7px}
+.gcard .mem{display:flex; flex-direction:column; gap:9px; margin-top:14px; padding-top:13px;
+  border-top:1px solid var(--rule)}
+.gcard .mem > div{display:flex; align-items:center; gap:9px; font-size:14px}
+.gcard .mem i{width:23px; height:23px; border-radius:99px; background:var(--pc); color:var(--surface);
+  display:grid; place-items:center; font-size:10.5px; font-weight:600; font-style:normal; flex:none}
+.gcard .mem span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.gcard .mem em{font-style:normal; margin-left:auto; flex:none; font-size:10.5px; font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--faint)}
+.gcard .acts{display:flex; border-top:1px solid var(--rule); margin:15px -17px -16px}
+.gcard .acts button{flex:1; border:0; background:transparent; height:46px; font-size:13.5px;
+  font-weight:500; color:var(--dim)}
+.gcard .acts button:hover{background:var(--raise); color:var(--ink)}
+.gcard .acts button + button{border-left:1px solid var(--rule)}
+.gcard .acts button.danger{color:var(--accent-ink)}
+.gv-bar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px}
 
 @media (max-width:860px){
   .stats{grid-template-columns:minmax(0,1fr)}
@@ -730,6 +747,11 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 }
 .mw-free b{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:500; color:var(--accent-ink); line-height:1.1}
 .mw-free s{text-decoration:none; font-size:8.5px; color:color-mix(in oklab, var(--accent-ink) 70%, transparent); line-height:1.2; margin-top:1px}
+.mw-free u{
+  text-decoration:none; font-family:"IBM Plex Mono",monospace; font-size:8.5px; line-height:1.2;
+  margin-top:1px; white-space:nowrap; max-width:100%; overflow:hidden;
+  color:color-mix(in oklab, var(--accent-ink) 80%, transparent);
+}
 .mw-legend{display:flex; gap:16px; align-items:center; margin:11px 4px 0; font-size:11.5px; color:var(--faint)}
 .mw-legend span{display:flex; align-items:center; gap:6px}
 .mw-legend i{width:14px; height:9px; border-radius:3px; display:inline-block}
@@ -2242,7 +2264,8 @@ window.OVERLAP_CONFIG = {
         f.style.top = ((w[0] - S.dayStart) * ppm) + 'px';
         f.style.height = hgt + 'px';
         f.appendChild(el('b', '', shortDur(w[1] - w[0])));
-        if (hgt >= 30) f.appendChild(el('s', '', ppl.length === 1 ? 'you' : 'all ' + ppl.length));
+        if (hgt >= 28) f.appendChild(el('u', '', hhmmShort(w[0]) + '\u2013' + hhmmShort(w[1])));
+        if (hgt >= 46) f.appendChild(el('s', '', ppl.length === 1 ? 'you' : 'all ' + ppl.length));
         f.onclick = function () { openWindowSheet(d, w, ppl, dates); };
         col.appendChild(f);
       });
@@ -2543,7 +2566,9 @@ window.OVERLAP_CONFIG = {
     var host = document.getElementById('groupsView');
     if (!host) return;
     host.innerHTML = '';
-    var signedIn = !!(window.__CLOUD__ && window.__CLOUD__.signedIn && window.__CLOUD__.signedIn());
+    var C = window.__CLOUD__ || {};
+    var signedIn = !!(C.signedIn && C.signedIn());
+
     if (!signedIn) {
       var b = el('div', 'blank');
       b.appendChild(el('strong', '', 'Sign in to use groups'));
@@ -2558,19 +2583,56 @@ window.OVERLAP_CONFIG = {
       host.appendChild(b);
       return;
     }
-    var list = (window.__CLOUD__ && window.__CLOUD__.groupCards) ? window.__CLOUD__.groupCards() : [];
+
+    // making and joining belong on the page, not in a rail the phone never shows
+    var bar = el('div', 'gv-bar');
+    var mk = el('button', 'btn solid', 'New group');
+    mk.onclick = function () { if (C.promptGroup) C.promptGroup('new'); };
+    var jn = el('button', 'btn', 'Join with a code');
+    jn.onclick = function () { if (C.promptGroup) C.promptGroup('join'); };
+    bar.appendChild(mk);
+    bar.appendChild(jn);
+    host.appendChild(bar);
+
+    var list = C.groupCards ? C.groupCards() : [];
     if (!list.length) {
-      host.appendChild(el('div', 'blank', 'You are not in a group yet. Make one and send the code to your friends, or join theirs.'));
+      host.appendChild(el('div', 'blank',
+        'You are not in a group yet. Make one and send the code to your friends, or join theirs.'));
       return;
     }
+
     var wrap = el('div', 'gcards');
     list.forEach(function (g) {
       var c = el('div', 'gcard');
       var t = el('div', 't');
       t.appendChild(el('b', '', g.name));
+      if (g.owned) t.appendChild(el('span', 'tag', 'yours'));
       t.appendChild(el('span', 'code', g.code || ''));
       c.appendChild(t);
-      c.appendChild(el('div', 'm', (g.n || 0) + (g.n === 1 ? ' person' : ' people')));
+      c.appendChild(el('div', 'm', g.n + (g.n === 1 ? ' person' : ' people') +
+        (g.n === 1 ? ' \u00B7 send the code to add more' : '')));
+
+      var mem = el('div', 'mem');
+      g.members.forEach(function (p) {
+        var row = el('div');
+        row.style.setProperty('--pc', p.color);
+        row.appendChild(el('i', '', (p.name || '?').trim().charAt(0).toUpperCase()));
+        row.appendChild(el('span', '', p.name));
+        if (p.you) row.appendChild(el('em', '', 'you'));
+        else if (p.guest) row.appendChild(el('em', '', 'added by a friend'));
+        mem.appendChild(row);
+      });
+      c.appendChild(mem);
+
+      var acts = el('div', 'acts');
+      var cp = el('button', '', 'Copy code');
+      cp.onclick = function () { if (C.copyCode) C.copyCode(g.code, cp); };
+      acts.appendChild(cp);
+      var out = el('button', 'danger', g.owned ? 'Delete group' : 'Leave');
+      out.onclick = function () { if (C.leaveGroup) C.leaveGroup(g.raw, out); };
+      acts.appendChild(out);
+      c.appendChild(acts);
+
       wrap.appendChild(c);
     });
     host.appendChild(wrap);
@@ -3944,10 +4006,21 @@ window.OVERLAP_CONFIG = {
 
   function groupCards() {
     if (!me) return [];
+    var mine = O.myPerson();
     return groups.map(function (g) {
-      var n = 0;
-      O.S.cloud.forEach(function (c) { if ((c.groups || []).indexOf(g.id) >= 0) n++; });
-      return { id: g.id, name: g.name, code: g.join_code, n: n + 1 };   // members plus you
+      var mem = [{
+        name: (mine && mine.name) || shortName(),
+        color: (mine && mine.color) || O.PALETTE[0], you: true
+      }];
+      O.S.cloud.forEach(function (c) {
+        if ((c.groups || []).indexOf(g.id) >= 0) {
+          mem.push({ name: c.name, color: c.color, guest: !!c.guest });
+        }
+      });
+      return {
+        id: g.id, name: g.name, code: g.join_code, owner: g.owner,
+        owned: g.owner === me.id, members: mem, n: mem.length, raw: g
+      };
     });
   }
 
@@ -4069,40 +4142,56 @@ window.OVERLAP_CONFIG = {
       var owned = g.owner === me.id;
       var out = el('button', 'ga', owned ? 'Delete' : 'Leave');
       out.title = owned ? 'Delete this group for everyone in it' : 'Leave this group';
-      out.onclick = async function () {
-        if (!confirm(owned
-          ? 'Delete ' + g.name + '? It goes for everyone in it and the join code stops working.'
-          : 'Leave ' + g.name + '? You will stop seeing each other’s schedules.')) return;
-
-        out.disabled = true;
-        await sb.from('group_guests').delete().eq('added_by', me.id).eq('group_id', g.id);
-        var r = owned
-          ? await sb.from('groups').delete().eq('id', g.id)
-          : await sb.from('group_members').delete().eq('group_id', g.id).eq('user_id', me.id);
-        out.disabled = false;
-
-        if (r.error) {
-          warn('could not ' + (owned ? 'delete ' : 'leave ') + g.name, r.error);
-          alert('That did not work.\n\n' + r.error.message);
-          return;
-        }
-        await loadGroups();
-        // a delete no policy allows removes nothing and reports no error either
-        if (groups.some(function (x) { return x.id === g.id; })) {
-          var m2 = (owned ? 'Nothing was allowed to delete that group.' : 'Nothing was allowed to remove you from that group.') +
-            '\n\nThe database has no delete policy for it yet. Run supabase/group-leave.sql ' +
-            'in the Supabase SQL editor, then try again.';
-          warn(owned ? 'the group was not deleted, run supabase/group-leave.sql'
-                     : 'you were not removed from the group, run supabase/group-leave.sql', null);
-          alert(m2);
-          return;
-        }
-        clearWarning();
-        await pull();
-      };
+      out.onclick = function () { leaveGroup(g, out); };
       row.appendChild(out);
       host.appendChild(row);
     });
+  }
+
+  /* Dropping your membership of a group you own leaves you its owner, so it
+     came straight back on the next read and the button looked dead. */
+  async function leaveGroup(g, btn) {
+    var owned = g.owner === me.id;
+    if (!confirm(owned
+      ? 'Delete ' + g.name + '? It goes for everyone in it and the join code stops working.'
+      : 'Leave ' + g.name + '? You will stop seeing each other’s schedules.')) return;
+
+    if (btn) btn.disabled = true;
+    await sb.from('group_guests').delete().eq('added_by', me.id).eq('group_id', g.id);
+    var r = owned
+      ? await sb.from('groups').delete().eq('id', g.id)
+      : await sb.from('group_members').delete().eq('group_id', g.id).eq('user_id', me.id);
+    if (btn) btn.disabled = false;
+
+    if (r.error) {
+      warn('could not ' + (owned ? 'delete ' : 'leave ') + g.name, r.error);
+      alert('That did not work.\n\n' + r.error.message);
+      return;
+    }
+    await loadGroups();
+    // a delete no policy allows removes nothing and reports no error either
+    if (groups.some(function (x) { return x.id === g.id; })) {
+      var m2 = (owned ? 'Nothing was allowed to delete that group.' : 'Nothing was allowed to remove you from that group.') +
+        '\n\nThe database has no delete policy for it yet. Run supabase/group-leave.sql ' +
+        'in the Supabase SQL editor, then try again.';
+      warn(owned ? 'the group was not deleted, run supabase/group-leave.sql'
+                 : 'you were not removed from the group, run supabase/group-leave.sql', null);
+      alert(m2);
+      return;
+    }
+    clearWarning();
+    await pull();
+    O.renderAll();
+  }
+
+  function copyCode(code, btn) {
+    var ok = function () {
+      var was = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(function () { btn.textContent = was; }, 1400);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(ok, function () { });
+    else ok();
   }
 
   function promptGroup(mode) {
@@ -4235,6 +4324,7 @@ window.OVERLAP_CONFIG = {
 
   window.__CLOUD__ = { init: init, onLocalChange: onLocalChange, pull: pull,
     groupList: groupList, groupCards: groupCards, syncGuest: syncGuest,
+    promptGroup: promptGroup, leaveGroup: leaveGroup, copyCode: copyCode,
     signedIn: function () { return !!me; } };
 })();
 
