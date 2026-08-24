@@ -879,7 +879,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
     <div class="ld-wrap ld-navin">
       <span class="ld-mark"></span>
       <span class="ld-name">Overlap</span>
-      <span class="ld-for">for UW–Madison</span>
+      <span class="ld-for">Works at any school</span>
       <nav class="ld-links">
         <a href="#how">How it works</a>
         <a href="#privacy">Your data</a>
@@ -895,7 +895,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
       <p>Send a screenshot of everyone’s schedule. Overlap reads the courses off the image
          and shows the hours you are all free.</p>
       <div class="ld-cta">
-        <button class="ld-big" data-signin><span class="g">G</span>Sign in with your wisc.edu email</button>
+        <button class="ld-big" data-signin><span class="g">G</span>Sign in with Google</button>
       </div>
       <div class="ld-re"><span class="tick">✓</span>Free. Your schedule stays private until you share it.</div>
     </div>
@@ -920,7 +920,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
     <h2>Three steps, one minute</h2>
     <div class="ld-steps">
       <div class="ld-step"><i>01</i><b>Drop in a screenshot</b>
-        <p>A course list, a MyUW week, a photo of a printout.</p><u>jpg · png · paste text</u></div>
+        <p>A week view from your school’s portal, a course list, a photo of a printout.</p><u>jpg · png · paste text</u></div>
       <div class="ld-step"><i>02</i><b>Check the rows</b>
         <p>You confirm what we read. Anything uncertain is flagged.</p><u>edits take seconds</u></div>
       <div class="ld-step"><i>03</i><b>Share a code</b>
@@ -942,7 +942,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
       <div class="ld-ready">
         <b>Ready when you are</b>
         <p>Your groups follow you between laptop and phone.</p>
-        <button class="ld-big w" data-signin><span class="g">G</span>Sign in with wisc.edu</button>
+        <button class="ld-big w" data-signin><span class="g">G</span>Sign in with Google</button>
         <span class="ld-fine">Google account · no password to make</span>
       </div>
     </div>
@@ -951,7 +951,7 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
   <div class="ld-wrap ld-foot">
     <span class="ld-mark sm"></span>
     <span class="ld-name sm">Overlap</span>
-    <span class="ld-for plain">Made by students at UW–Madison</span>
+    <span class="ld-for plain">Made by students at UW–Madison, for anyone’s timetable</span>
     <nav class="ld-links">
       <a href="#privacy">Privacy</a>
       <a href="#how">How it works</a>
@@ -1027,7 +1027,6 @@ body.landing-on .bar, body.landing-on .frame, body.landing-on .tabbar{display:no
 window.OVERLAP_CONFIG = {
   supabaseUrl:  'https://dlrxjxcjpzemsiddkwqh.supabase.co',
   supabaseAnon: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRscnhqeGNqcHplbXNpZGRrd3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMjk2NjIsImV4cCI6MjEwMjkwNTY2Mn0.v9F-q-wgtXWO4TUAWKzIzxCxxPGaofHg7P3RhQZSLJE',
-  campusDomain: 'wisc.edu',
   google: true
 };
 </script>
@@ -2520,7 +2519,7 @@ window.OVERLAP_CONFIG = {
      What there is to see before there is anything to see. It stands in for the
      old empty state, and steps aside the moment a schedule exists or someone
      signs in. */
-  var entered = false;
+  var entered = false, forceLanding = false;
 
   function buildSampleWeek() {
     var host = document.getElementById('ldGrid');
@@ -2574,10 +2573,17 @@ window.OVERLAP_CONFIG = {
     var host = document.getElementById('landing');
     if (!host) return;
     var signedIn = !!(window.__CLOUD__ && window.__CLOUD__.signedIn && window.__CLOUD__.signedIn());
-    var show = !entered && !signedIn && !allPeople().length;
+    // signing in always dismisses it, so a forced landing cannot get stuck
+    var show = !signedIn && (forceLanding || (!entered && !allPeople().length));
     host.hidden = !show;
     document.body.classList.toggle('landing-on', show);
     if (show) buildSampleWeek();
+  }
+
+  function showLanding() {
+    forceLanding = true;
+    updateLanding();
+    window.scrollTo(0, 0);
   }
 
   function initLanding() {
@@ -3383,6 +3389,7 @@ window.OVERLAP_CONFIG = {
 
     return {
       thumb: makeThumb(canvas),
+      found: results.length,
       rows: results.filter(function (r) { return r.start != null && r.end != null; }).map(function (r) {
         return {
           code: (r.subject + ' ' + r.number).trim(),
@@ -3450,9 +3457,9 @@ window.OVERLAP_CONFIG = {
     var drop = el('div', 'drop');
     drop.innerHTML = '<h4>Drop a screenshot of the week</h4><p>Click to choose a file, or paste one with \u2318V.</p>' +
       '<p class="tip">Use a screenshot rather than a photo of your screen. It reads much faster and gets more of your classes right.</p>' +
-      '<p class="or">Works on a week grid from Course Search &amp; Enroll, MyUW, Google Calendar, ' +
-      'or anything else with coloured class blocks. The start and end times have to be readable ' +
-      'inside the blocks, since that is where they are read from.</p>';
+      '<p class="or">Works on a week grid from any school portal, Google Calendar, or anything else ' +
+      'with coloured class blocks. The start and end times have to be readable inside the blocks, ' +
+      'since that is where they are read from.</p>';
     var fileIn = el('input'); fileIn.type = 'file'; fileIn.accept = 'image/*,.heic,.heif'; fileIn.multiple = true; fileIn.style.display = 'none';
     drop.onclick = function () { fileIn.click(); };
     drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('hot'); };
@@ -3486,6 +3493,20 @@ window.OVERLAP_CONFIG = {
     m.head.querySelector('.xbtn').onclick = m.close;
 
     async function handle(files) {
+      var foundBlocks = 0;
+
+      function refuse(msg) {
+        errBox.textContent = msg;
+        errBox.style.display = '';
+        prog.style.display = 'none';
+        drop.style.display = '';
+        var man = el('button', 'btn sm', 'Type the classes in instead');
+        man.style.marginTop = '10px';
+        man.onclick = function () { m.close(); openReview(draft, []); };
+        errBox.appendChild(document.createElement('br'));
+        errBox.appendChild(man);
+      }
+
       if (!files || !files.length) return;
       errBox.style.display = 'none';
       prog.style.display = '';
@@ -3497,20 +3518,25 @@ window.OVERLAP_CONFIG = {
             if (p != null) barI.style.width = Math.round(p * 100) + '%';
           });
           if (r.thumb) { draft.thumbs.push(r.thumb); var im = new Image(); im.src = r.thumb; thumbs.appendChild(im); }
+          foundBlocks += r.found || 0;
           draft.rows = draft.rows.concat(r.rows);
         } catch (e) {
-          errBox.textContent = (e && e.message) || 'That image could not be read.';
-          errBox.style.display = '';
-          prog.style.display = 'none';
-          drop.style.display = '';
-          var man = el('button', 'btn sm', 'Add classes by hand instead');
-          man.style.marginTop = '8px';
-          man.onclick = function () { m.close(); openReview(draft, []); };
-          errBox.appendChild(document.createElement('br'));
-          errBox.appendChild(man);
+          refuse((e && e.message) || 'That image could not be read.');
           return;
         }
       }
+      /* A week with no hours in it is not a week. Rather than opening an empty
+         review, say which half was missing: blocks with no times, or no blocks. */
+      if (!draft.rows.length) {
+        refuse(foundBlocks
+          ? 'Found ' + foundBlocks + (foundBlocks === 1 ? ' class block' : ' class blocks') +
+            ' but no times inside them. Overlap reads the start and end time printed in each block, ' +
+            'so zoom in until those are readable and take the shot again.'
+          : 'No class blocks found in that picture. It reads a week grid with coloured blocks, ' +
+            'each showing its course and its times.');
+        return;
+      }
+
       barI.style.width = '100%';
       progTxt.textContent = 'Done. Check what it read.';
       setTimeout(function () { m.close(); openReview(draft, mergeRows(draft.rows)); }, 250);
@@ -3769,7 +3795,7 @@ window.OVERLAP_CONFIG = {
 
     renderAll();
     window.__OVERLAP__ = { S: S, renderAll: renderAll, save: save, saveQuiet: saveQuiet, el: el, modal: modal, uid: uid,
-      safeColor: safeColor,
+      safeColor: safeColor, showLanding: showLanding,
       decodeToCanvas: decodeToCanvas, rotateCanvas: rotateCanvas, allPeople: allPeople, visible: visible, myPerson: myPerson, nextColor: nextColor, PALETTE: PALETTE, autoFitWindow: autoFitWindow, freeForDay: freeForDay, allWindows: allWindows, openAdd: openAdd, readImage: readImage, mergeRows: mergeRows, active: active, visibleDays: visibleDays };
   }
 
@@ -3858,12 +3884,12 @@ window.OVERLAP_CONFIG = {
     $('btnNewGroup').onclick = function () { promptGroup('new'); };
     $('btnJoinGroup').onclick = function () { promptGroup('join'); };
 
-    sb.auth.onAuthStateChange(function (_event, session) { onSession(session); });
+    sb.auth.onAuthStateChange(function (event, session) { onSession(session, event); });
     window.addEventListener('focus', function () { if (me) pull(); });
   }
 
   /* ---------- session ---------- */
-  async function onSession(session) {
+  async function onSession(session, event) {
     me = session ? session.user : null;
     var btn = $('btnAccount');
     if (!me) {
@@ -3872,6 +3898,7 @@ window.OVERLAP_CONFIG = {
       try { localStorage.removeItem(CACHE); } catch (e) { }
       setAccountUI();
       $('groupPanel').hidden = true;
+      if (event === 'SIGNED_OUT' && O.showLanding) O.showLanding();
       O.renderAll();
       return;
     }

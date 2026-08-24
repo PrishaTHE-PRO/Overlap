@@ -7,8 +7,9 @@ class schedules.
 
 ## What it does
 
-- **Reads a screenshot.** Course Search & Enroll, MyUW, Google Calendar, a
-  photo of a printout. The image is read on your own device and never uploaded.
+- **Reads a screenshot.** Any school's portal, Google Calendar, a photo of a
+  printout. The image is read on your own device and never uploaded. A picture
+  with no times in its class blocks is refused rather than half read.
 - **Lays out the week.** Classes collapse into one neutral band a day, so the
   time everybody shares is the only thing coloured on the grid.
 - **Shares a group.** A short code puts everyone who joins in the same week.
