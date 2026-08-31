@@ -2519,7 +2519,7 @@ window.OVERLAP_CONFIG = {
      What there is to see before there is anything to see. It stands in for the
      old empty state, and steps aside the moment a schedule exists or someone
      signs in. */
-  var entered = false, forceLanding = false;
+  var entered = false;
 
   function buildSampleWeek() {
     var host = document.getElementById('ldGrid');
@@ -2572,16 +2572,22 @@ window.OVERLAP_CONFIG = {
   function updateLanding() {
     var host = document.getElementById('landing');
     if (!host) return;
-    var signedIn = !!(window.__CLOUD__ && window.__CLOUD__.signedIn && window.__CLOUD__.signedIn());
-    // signing in always dismisses it, so a forced landing cannot get stuck
-    var show = !signedIn && (forceLanding || (!entered && !allPeople().length));
+    var C = window.__CLOUD__ || {};
+    var signedIn = !!(C.signedIn && C.signedIn());
+    // Signed out is the landing, always: on a fresh visit, on a reload with a
+    // week already saved, on an expiry, on signing out. Two things hold it back.
+    // While the session is still being restored there is no verdict yet, and
+    // showing the landing then would flash it at someone who is signed in; and
+    // `entered` is the way through for when sign-in cannot be reached at all.
+    var pending = !!(C.resolved && !C.resolved());
+    var show = !signedIn && !pending && !entered;
     host.hidden = !show;
     document.body.classList.toggle('landing-on', show);
     if (show) buildSampleWeek();
   }
 
   function showLanding() {
-    forceLanding = true;
+    entered = false;
     updateLanding();
     window.scrollTo(0, 0);
   }
@@ -3829,6 +3835,7 @@ window.OVERLAP_CONFIG = {
   var O = null;                       // bridge into the app
   var sb = null;                      // supabase client
   var me = null;                      // auth user
+  var resolved = false;               // has the session question been answered yet
   var profile = null;
   var groups = [];
   var pushTimer = null;
@@ -3861,22 +3868,31 @@ window.OVERLAP_CONFIG = {
   }
 
   /* ---------- boot ---------- */
+  /* The landing holds off until it knows whether anyone is signed in. On the
+     paths where no session will ever be reported, say so, or it holds off for
+     good and nobody ever sees it. */
+  function settle() {
+    resolved = true;
+    if (O) O.renderAll();
+  }
+
   async function init() {
     O = window.__OVERLAP__;
-    if (!O || !CFG.supabaseUrl || !CFG.supabaseAnon) return;
+    if (!O) { resolved = true; return; }
+    if (!CFG.supabaseUrl || !CFG.supabaseAnon) { settle(); return; }
     restoreCache();
 
     var mod = null;
     for (var i = 0; i < CDN.length && !mod; i++) {
       try { mod = await import(CDN[i]); } catch (e) { mod = null; }
     }
-    if (!mod || !mod.createClient) return;   // stay local only
+    if (!mod || !mod.createClient) { settle(); return; }   // stay local only
 
     try {
       sb = mod.createClient(CFG.supabaseUrl, CFG.supabaseAnon, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
       });
-    } catch (e) { return; }
+    } catch (e) { settle(); return; }
 
     var btn = $('btnAccount');
     btn.hidden = false;
@@ -3891,6 +3907,7 @@ window.OVERLAP_CONFIG = {
   /* ---------- session ---------- */
   async function onSession(session, event) {
     me = session ? session.user : null;
+    resolved = true;
     var btn = $('btnAccount');
     if (!me) {
       profile = null; groups = [];
@@ -3898,7 +3915,7 @@ window.OVERLAP_CONFIG = {
       try { localStorage.removeItem(CACHE); } catch (e) { }
       setAccountUI();
       $('groupPanel').hidden = true;
-      if (event === 'SIGNED_OUT' && O.showLanding) O.showLanding();
+      if (O.showLanding) O.showLanding();
       O.renderAll();
       return;
     }
@@ -4484,7 +4501,8 @@ window.OVERLAP_CONFIG = {
     groupList: groupList, groupCards: groupCards,
     promptGroup: promptGroup, leaveGroup: leaveGroup, copyCode: copyCode, renameGroup: renameGroup,
     removeMember: removeMember,
-    signedIn: function () { return !!me; } };
+    signedIn: function () { return !!me; },
+    resolved: function () { return resolved; } };
 })();
 
 </script>
